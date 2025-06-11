@@ -74,11 +74,18 @@ function startGame() {
 
 function renderGame() {
     cardsEl.textContent = "Cards: "
+    //recompute sum:
         sum = 0;
     for (let card of cards) {
       sum += card;
     }
-    
+    // 2. Adjust for Aces: convert any 11s to 1s while sum > 21
+    for (let i = 0; i < cards.length && sum > 21; i++) {
+      if (cards[i] === 11) {
+        cards[i] = 1;
+        sum -= 10;
+      }
+    }
     for (let i = 0; i < cards.length; i++) {
         cardsEl.textContent += cards[i] + " "
     }
