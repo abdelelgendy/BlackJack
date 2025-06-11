@@ -14,6 +14,34 @@ let cardsEl = document.getElementById("cards-el")
 let playerEl = document.getElementById("player-el")
 
 playerEl.textContent = player.name + ": $" + player.chips
+// in index.js, at the top
+const SUITS = ["♠", "♥", "♦", "♣"];
+const RANKS = [
+  { name: "A", value: 11 },
+  { name: "2", value: 2 },
+  { name: "3", value: 3 },
+  { name: "4", value: 4 },
+  { name: "5", value: 5 },
+  { name: "6", value: 6 },
+  { name: "7", value: 7 },
+  { name: "8", value: 8 },
+  { name: "9", value: 9 },
+  { name: "10", value: 10 },
+  { name: "J", value: 10 },
+  { name: "Q", value: 10 },
+  { name: "K", value: 10 },
+];
+
+// call this once at the start of each round:
+function createDeck() {
+  const deck = [];
+  for (let suit of SUITS) {
+    for (let rank of RANKS) {
+      deck.push({ suit, rankName: rank.name, rankValue: rank.value });
+    }
+  }
+  return deck;
+}
 
 function getRandomCard() {
     let randomNumber = Math.floor( Math.random()*13 ) + 1
