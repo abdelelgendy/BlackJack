@@ -5,7 +5,11 @@ let player = {
 
 let wins = 0;
 let losses = 0;
+let pushes = 0;
+
 const statsEl = document.getElementById('stats-el');
+
+
 
 let dealerHand = [];
 let cards = []
@@ -62,8 +66,6 @@ function calculate(hand) {
 function startGame() {
   cards = [];
   dealerHand = [];
-  wins = wins;  // stats persist
-
   isAlive = true
   hasBlackJack = false
 
@@ -131,7 +133,8 @@ function renderGame() {
   document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
   document.getElementById('stand-btn').disabled       = !isAlive || hasBlackJack;
   document.getElementById('start-game-btn').disabled  =  isAlive;
-  statsEl.textContent = `Wins: ${wins} Losses: ${losses}`;
+  statsEl.textContent = `Wins: ${wins} Losses: ${losses} Pushes: ${pushes}`;
+
 }
 
 
@@ -168,16 +171,17 @@ function stand() {
   }
 
   // determine outcome
-  if (dealerSum > 21 || playerSum > dealerSum) {
-    message = "You win!";
-    wins++;
-  } else if (playerSum < dealerSum) {
-    message = "Dealer wins...";
-    losses++;
-  } else {
-    message = "Push (tie).";
-    // no stat change
-  }
+    if (dealerSum > 21 || playerSum > dealerSum) {
+        message = "You win!";
+        wins++;
+      } else if (playerSum < dealerSum) {
+        message = "Dealer wins...";
+        losses++;
+      } else {
+        message = "Push (tie).";
+        pushes++;                 // ⬅️ track the tie
+      }
+
   isAlive = false;       // round over
   hasBlackJack = false;  // clear any blackjack flag
   messageEl.textContent = message;
