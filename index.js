@@ -43,6 +43,15 @@ function createDeck() {
   return deck;
 }
 
+function shuffle(deck) {
+  // Fisher–Yates in-place shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+// call this to get a random card from the deck:
+
 function getRandomCard() {
     let randomNumber = Math.floor( Math.random()*13 ) + 1
     if (randomNumber > 10) {
