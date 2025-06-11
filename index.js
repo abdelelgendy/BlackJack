@@ -106,7 +106,19 @@ function startGame() {
 function renderGame() {
   //  Calculate player total with Ace-adjust logic
   sum = calculate(cards);
-
+  //check for bj or bust 
+  if (sum === 21) {
+    message      = "You've got Blackjack!";
+    hasBlackJack = true;
+    isAlive      = false;
+    wins++;
+  } else if (sum > 21) {
+    message = "You're out of the game!";
+    isAlive = false;
+    losses++;
+  } else {
+    message = "Do you want to draw a new card?";
+  }
   //  Render dealer’s cards
   if (isAlive) {
     // Mid-round: show first card + a face-down placeholder

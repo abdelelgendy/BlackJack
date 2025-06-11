@@ -1,18 +1,22 @@
 <html>
     <head>
         <link rel="stylesheet" href="index.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <h1>Blackjack</h1>
-        <p id="message-el">Want to play a round?</p>
-        <p id="dealer-el">Dealer:</p>
-        <p id="cards-el">Cards:</p>
-        <p id="sum-el">Sum:</p>
-        <button id="start-game-btn" onclick="startGame()">START GAME</button>
-        <button id="new-card-btn" onclick="newCard()">NEW CARD</button>
-        <button id="stand-btn" onclick="stand()">STAND</button>
-        <p id="stats-el">Wins: 0 Losses: 0</p>
-        <p id="player-el"></p>
-        <script src="index.js"></script>
+        <div id="game-container"></div>
+            <h1>Blackjack</h1>
+            <p id="message-el">Want to play a round?</p>
+            <p id="dealer-el">Dealer:</p>
+            <p id="cards-el">Cards:</p>
+            <p id="sum-el">Sum:</p>
+            <button id="start-game-btn" onclick="startGame()">START GAME</button>
+            <button id="new-card-btn" onclick="newCard()">NEW CARD</button>
+            <button id="stand-btn" onclick="stand()">STAND</button>
+            <p id="stats-el">Wins: 0 Losses: 0</p>
+            <p id="player-el"></p>
+            <script src="index.js"></script>
+        </div>
+        
     </body>
 </html>
