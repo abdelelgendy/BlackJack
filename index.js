@@ -3,6 +3,11 @@ let player = {
     chips: 200
 }
 
+let wins = 0;
+let losses = 0;
+const statsEl = document.getElementById('stats-el');
+
+
 let cards = []
 let sum = 0
 let hasBlackJack = false
@@ -79,7 +84,7 @@ function renderGame() {
     for (let card of cards) {
       sum += card;
     }
-    // 2. Adjust for Aces: convert any 11s to 1s while sum > 21
+    // Adjust for Aces: convert any 11s to 1s while sum > 21
     for (let i = 0; i < cards.length && sum > 21; i++) {
       if (cards[i] === 11) {
         cards[i] = 1;
@@ -92,19 +97,23 @@ function renderGame() {
     
     sumEl.textContent = "Sum: " + sum
     if (sum <= 20) {
-        message = "Do you want to draw a new card?"
+      message = "Do you want to draw a new card?";
     } else if (sum === 21) {
-        message = "You've got Blackjack!"
-        hasBlackJack = true
+      message = "You've got Blackjack!";
+      hasBlackJack = true;
+      wins++;
     } else {
-        message = "You're out of the game!"
-        isAlive = false
+      message = "You're out of the game!";
+      isAlive = false;
+      losses++;
     }
+
     messageEl.textContent = message
-    // 3. Disable/enable buttons based on game state
+    //  Disable/enable buttons based on game state
     document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
     document.getElementById('start-game-btn').disabled  =  isAlive;
-
+    //  Refresh the stats display
+  statsEl.textContent = `Wins: ${wins} Losses: ${losses}`;
 }
 
 
