@@ -74,6 +74,11 @@ function startGame() {
 
 function renderGame() {
     cardsEl.textContent = "Cards: "
+        sum = 0;
+    for (let card of cards) {
+      sum += card;
+    }
+    
     for (let i = 0; i < cards.length; i++) {
         cardsEl.textContent += cards[i] + " "
     }
