@@ -7,7 +7,7 @@ let wins = 0;
 let losses = 0;
 const statsEl = document.getElementById('stats-el');
 
-
+let dealerHand = [];
 let cards = []
 let sum = 0
 let hasBlackJack = false
@@ -17,6 +17,8 @@ let messageEl = document.getElementById("message-el")
 let sumEl = document.getElementById("sum-el")
 let cardsEl = document.getElementById("cards-el")
 let playerEl = document.getElementById("player-el")
+let dealerEl  = document.getElementById("dealer-el")
+
 
 playerEl.textContent = player.name + ": $" + player.chips
 // in index.js, at the top
@@ -68,6 +70,23 @@ function getRandomCard() {
     }
 }
 
+function calculate(hand) {
+  let total = 0;
+  // sum raw values
+  for (let card of hand) total += card.value;
+
+  // count how many Aces we have
+  let aces = hand.filter(c => c.value === 11).length;
+
+  // downgrade Aces from 11 to 1 as needed
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces--;
+  }
+  return total;
+}
+
+
 function startGame() {
   isAlive = true
   hasBlackJack = false
@@ -76,6 +95,8 @@ function startGame() {
   const firstCard  = drawCard()
   const secondCard = drawCard()
   cards = [ firstCard, secondCard ]
+  dealerHand = [ drawCard(), drawCard() ];
+
 
   // we don’t set sum here any more; renderGame() will recompute it
   renderGame()
@@ -83,19 +104,21 @@ function startGame() {
 
 
 function renderGame() {
-    //recompute sum:
-    sum = 0;
-    for (let card of cards) {
-    sum += card.value;
+    //recompute sum using helper function:
+    sum = calculate(cards)
+
+    if (isAlive) {
+    // mid-round: show first card + a face-down placeholder
+    dealerEl.textContent = 'Dealer: '
+      + `${dealerHand[0].rankName}${dealerHand[0].suit} `
+      + '[hidden]';
+    } else {
+    // round over: reveal all cards and total
+    const fullHand = dealerHand.map(c => `${c.rankName}${c.suit}`).join(' ');
+    const dealerTotal = calculate(dealerHand);
+    dealerEl.textContent = `Dealer: ${fullHand} (Total: ${dealerTotal})`;
     }
 
-    // Adjust for Aces: convert any 11s to 1s while sum > 21
-    for (let i = 0; i < cards.length && sum > 21; i++) {
-      if (cards[i].value === 11) {
-        cards[i].value = 1
-        sum -= 10
-      }
-    }
 
     let html = 'Cards: ';
     for (let card of cards) {
@@ -125,8 +148,10 @@ function renderGame() {
     //  Disable/enable buttons based on game state
     document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
     document.getElementById('start-game-btn').disabled  =  isAlive;
+    document.getElementById('stand-btn').disabled = !isAlive || hasBlackJack;
     //  Refresh the stats display
   statsEl.textContent = `Wins: ${wins} Losses: ${losses}`;
+
 }
 
 
@@ -148,4 +173,33 @@ function drawCard() {
   const suit = SUITS[suitIndex];      // "♠", "♥", etc.
 
   return { rankName: rank.name, suit, value: rank.value };
+}
+
+function stand() {
+  // compute both totals
+  const playerSum = sum;             // your global sum was just calculated in renderGame()
+  let dealerSum  = calculate(dealerHand);
+
+  // dealer draws to 17+
+  while (dealerSum < 17) {
+    dealerHand.push(drawCard());
+    dealerSum = calculate(dealerHand);
+  }
+
+  // determine outcome
+  if (dealerSum > 21 || playerSum > dealerSum) {
+    message = "You win!";
+    wins++;
+  } else if (playerSum < dealerSum) {
+    message = "Dealer wins...";
+    losses++;
+  } else {
+    message = "Push (tie).";
+    // no stat change
+  }
+  isAlive = false;       // round over
+  hasBlackJack = false;  // clear any blackjack flag
+  messageEl.textContent = message;
+  renderGame();
+
 }
