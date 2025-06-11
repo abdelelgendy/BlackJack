@@ -73,31 +73,22 @@ function startGame() {
 }
 
 function renderGame() {
-  // recalc raw sum from the cards array:
-  sum = cards.reduce((acc, c) => acc + c, 0)
-
-  // adjust for Aces: if sum >21 and there are 11s, turn them into 1s (i.e. -10)
-  for (let i = 0; i < cards.length; i++) {
-    if (sum > 21 && cards[i] === 11) {
-      cards[i] = 1      // flip this Ace from 11 to 1
-      sum -= 10         // subtract the extra 10 points
+    cardsEl.textContent = "Cards: "
+    for (let i = 0; i < cards.length; i++) {
+        cardsEl.textContent += cards[i] + " "
     }
-  }
-
-  // now update the UI…
-  cardsEl.textContent = "Cards: " + cards.join(" ")
-  sumEl.textContent   = "Sum: " + sum
-
-  if (sum < 21) {
-    message = "Do you want to draw a new card?"
-  } else if (sum === 21) {
-    message = "You've got Blackjack!"
-    hasBlackJack = true
-  } else {
-    message = "You're out of the game!"
-    isAlive = false
-  }
-  messageEl.textContent = message
+    
+    sumEl.textContent = "Sum: " + sum
+    if (sum <= 20) {
+        message = "Do you want to draw a new card?"
+    } else if (sum === 21) {
+        message = "You've got Blackjack!"
+        hasBlackJack = true
+    } else {
+        message = "You're out of the game!"
+        isAlive = false
+    }
+    messageEl.textContent = message
 }
 
 
