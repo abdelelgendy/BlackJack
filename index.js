@@ -39,36 +39,8 @@ const RANKS = [
   { name: "K", value: 10 },
 ];
 
-// call this once at the start of each round:
-function createDeck() {
-  const deck = [];
-  for (let suit of SUITS) {
-    for (let rank of RANKS) {
-      deck.push({ suit, rankName: rank.name, rankValue: rank.value });
-    }
-  }
-  return deck;
-}
 
-function shuffle(deck) {
-  // Fisher–Yates in-place shuffle
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-  }
-}
-// call this to get a random card from the deck:
 
-function getRandomCard() {
-    let randomNumber = Math.floor( Math.random()*13 ) + 1
-    if (randomNumber > 10) {
-        return 10
-    } else if (randomNumber === 1) {
-        return 11
-    } else {
-        return randomNumber
-    }
-}
 
 function calculate(hand) {
   let total = 0;
@@ -88,6 +60,10 @@ function calculate(hand) {
 
 
 function startGame() {
+  cards = [];
+  dealerHand = [];
+  wins = wins;  // stats persist
+
   isAlive = true
   hasBlackJack = false
 
