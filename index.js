@@ -70,9 +70,7 @@ function getRandomCard() {
 
 function startGame() {
     isAlive = true
-    let firstCard = getRandomCard()
-    let secondCard = getRandomCard()
-    cards = [firstCard, secondCard]
+    cards = [ drawCard(), drawCard() ];
     sum = firstCard + secondCard
     renderGame()
 }
@@ -80,10 +78,11 @@ function startGame() {
 function renderGame() {
     cardsEl.textContent = "Cards: "
     //recompute sum:
-        sum = 0;
+    sum = 0;
     for (let card of cards) {
-      sum += card;
+    sum += card.value;
     }
+
     // Adjust for Aces: convert any 11s to 1s while sum > 21
     for (let i = 0; i < cards.length && sum > 21; i++) {
       if (cards[i] === 11) {
@@ -119,9 +118,21 @@ function renderGame() {
 
 function newCard() {
     if (isAlive === true && hasBlackJack === false) {
-        let card = getRandomCard()
+        let card = drawCard();
+        cards.push(card);
         sum += card
         cards.push(card)
         renderGame()        
     }
+}
+
+function drawCard() {
+  // pick a random rank (0–12) and suit (0–3)
+  const rankIndex = Math.floor(Math.random() * RANKS.length);
+  const suitIndex = Math.floor(Math.random() * SUITS.length);
+
+  const rank = RANKS[rankIndex];      // { name: "A", value: 11 } etc.
+  const suit = SUITS[suitIndex];      // "♠", "♥", etc.
+
+  return { rankName: rank.name, suit, value: rank.value };
 }
