@@ -113,6 +113,7 @@ function renderGame() {
     } else if (sum === 21) {
       message = "You've got Blackjack!";
       hasBlackJack = true;
+      isAlive = false;
       wins++;
     } else {
       message = "You're out of the game!";
