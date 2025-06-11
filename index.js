@@ -101,6 +101,10 @@ function renderGame() {
         isAlive = false
     }
     messageEl.textContent = message
+    // 3. Disable/enable buttons based on game state
+    document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
+    document.getElementById('start-game-btn').disabled  =  isAlive;
+
 }
 
 
