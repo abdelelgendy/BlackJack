@@ -90,9 +90,10 @@ function renderGame() {
         sum -= 10;
       }
     }
-    for (let i = 0; i < cards.length; i++) {
-        cardsEl.textContent += cards[i] + " "
+    for (let card of cards) {
+    cardsEl.textContent += `${card.rankName}${card.suit} `;
     }
+
     
     sumEl.textContent = "Sum: " + sum
     if (sum <= 20) {
