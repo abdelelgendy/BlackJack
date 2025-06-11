@@ -104,55 +104,48 @@ function startGame() {
 
 
 function renderGame() {
-    //recompute sum using helper function:
-    sum = calculate(cards)
+  //  Calculate player total with Ace-adjust logic
+  sum = calculate(cards);
 
-    if (isAlive) {
-    // mid-round: show first card + a face-down placeholder
-    dealerEl.textContent = 'Dealer: '
-      + `${dealerHand[0].rankName}${dealerHand[0].suit} `
-      + '[hidden]';
-    } else {
-    // round over: reveal all cards and total
-    const fullHand = dealerHand.map(c => `${c.rankName}${c.suit}`).join(' ');
-    const dealerTotal = calculate(dealerHand);
-    dealerEl.textContent = `Dealer: ${fullHand} (Total: ${dealerTotal})`;
+  //  Render dealer’s cards
+  if (isAlive) {
+    // Mid-round: show first card + a face-down placeholder
+    const first = dealerHand[0];
+    const redClass = (first.suit === '♥' || first.suit === '♦') ? ' red' : '';
+    dealerEl.innerHTML =
+      'Dealer: ' +
+      `<span class="card${redClass}">${first.rankName}${first.suit}</span> ` +
+      `<span class="card">[?]</span>`;  // face-down card
+  } else {
+    // Round over: show all dealer cards + total
+    let html = 'Dealer: ';
+    for (let card of dealerHand) {
+      const isRed = (card.suit === '♥' || card.suit === '♦');
+      html += `<span class="card${isRed ? ' red' : ''}">` +
+              `${card.rankName}${card.suit}</span> `;
     }
+    html += `(Total: ${calculate(dealerHand)})`;
+    dealerEl.innerHTML = html;
+  }
 
+  //  Render player’s cards (same approach)
+  let playerHtml = 'Cards: ';
+  for (let card of cards) {
+    const isRed = (card.suit === '♥' || card.suit === '♦');
+    playerHtml += `<span class="card${isRed ? ' red' : ''}">` +
+                  `${card.rankName}${card.suit}</span> `;
+  }
+  cardsEl.innerHTML = playerHtml;
 
-    let html = 'Cards: ';
-    for (let card of cards) {
-      const isRed = card.suit === '♥' || card.suit === '♦';
-      html += `<span class="card${isRed ? ' red' : ''}">`
-          + `${card.rankName}${card.suit}</span> `;
-    }
-    cardsEl.innerHTML = html;
-
-
-    
-    sumEl.textContent = "Sum: " + sum
-    if (sum <= 20) {
-      message = "Do you want to draw a new card?";
-    } else if (sum === 21) {
-      message = "You've got Blackjack!";
-      hasBlackJack = true;
-      isAlive = false;
-      wins++;
-    } else {
-      message = "You're out of the game!";
-      isAlive = false;
-      losses++;
-    }
-
-    messageEl.textContent = message
-    //  Disable/enable buttons based on game state
-    document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
-    document.getElementById('start-game-btn').disabled  =  isAlive;
-    document.getElementById('stand-btn').disabled = !isAlive || hasBlackJack;
-    //  Refresh the stats display
+  // Update sum, message, buttons, and stats
+  sumEl.textContent = "Sum: " + sum;
+  messageEl.textContent = message;
+  document.getElementById('new-card-btn').disabled    = !isAlive || hasBlackJack;
+  document.getElementById('stand-btn').disabled       = !isAlive || hasBlackJack;
+  document.getElementById('start-game-btn').disabled  =  isAlive;
   statsEl.textContent = `Wins: ${wins} Losses: ${losses}`;
-
 }
+
 
 
 function newCard() {
