@@ -83,7 +83,6 @@ function startGame() {
 
 
 function renderGame() {
-    cardsEl.textContent = "Cards: "
     //recompute sum:
     sum = 0;
     for (let card of cards) {
@@ -98,9 +97,14 @@ function renderGame() {
       }
     }
 
+    let html = 'Cards: ';
     for (let card of cards) {
-    cardsEl.textContent += `${card.rankName}${card.suit} `;
+      const isRed = card.suit === '♥' || card.suit === '♦';
+      html += `<span class="card${isRed ? ' red' : ''}">`
+          + `${card.rankName}${card.suit}</span> `;
     }
+    cardsEl.innerHTML = html;
+
 
     
     sumEl.textContent = "Sum: " + sum
