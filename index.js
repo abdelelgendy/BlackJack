@@ -85,34 +85,34 @@ function renderGame() {
   //  Calculate player total with Ace-adjust logic
   sum = calculate(cards);
   //check for bj or bust 
-  if (sum === 21) {
-    message      = "You've got Blackjack!";
-    hasBlackJack = true;
-    isAlive      = false;
-    wins++;
-  } else if (sum > 21) {
-    message = "You're out of the game!";
-    isAlive = false;
-    losses++;
-  } else {
-    message = "Do you want to draw a new card?";
+   if (isAlive) {
+    if (sum === 21) {
+      message      = "You've got Blackjack!";
+      hasBlackJack = true;
+      isAlive      = false;
+      wins++;
+    } else if (sum > 21) {
+      message = "You're out of the game!";
+      isAlive = false;
+      losses++;
+    } else {
+      message = "Do you want to draw a new card?";
+    }
   }
   //  Render dealer’s cards
   if (isAlive) {
-    // Mid-round: show first card + a face-down placeholder
-    const first = dealerHand[0];
+    const first    = dealerHand[0];
     const redClass = (first.suit === '♥' || first.suit === '♦') ? ' red' : '';
     dealerEl.innerHTML =
       'Dealer: ' +
       `<span class="card${redClass}">${first.rankName}${first.suit}</span> ` +
-      `<span class="card">[?]</span>`;  // face-down card
+      `<span class="card">[?]</span>`;
   } else {
-    // Round over: show all dealer cards + total
     let html = 'Dealer: ';
     for (let card of dealerHand) {
       const isRed = (card.suit === '♥' || card.suit === '♦');
-      html += `<span class="card${isRed ? ' red' : ''}">` +
-              `${card.rankName}${card.suit}</span> `;
+      html += `<span class="card${isRed ? ' red' : ''}">`
+           +  `${card.rankName}${card.suit}</span> `;
     }
     html += `(Total: ${calculate(dealerHand)})`;
     dealerEl.innerHTML = html;
@@ -184,7 +184,7 @@ function stand() {
 
   isAlive = false;       // round over
   hasBlackJack = false;  // clear any blackjack flag
-  messageEl.textContent = message;
+ 
   renderGame();
 
 }
