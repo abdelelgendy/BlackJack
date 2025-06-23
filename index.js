@@ -143,7 +143,7 @@ function startGame() {
     message = (currentBet < 1) ? "Bet must be at least $1!" : "You don't have enough chips to play!";
     isAlive = false;
     hasBlackJack = false;
-    renderGame();
+    renderGame(true);
     return;
   }
   cards = [drawCard(), drawCard()];
@@ -156,7 +156,7 @@ function startGame() {
   mainHandDone = false;
   splitHandDone = false;
   message = "";
-  renderGame();
+  renderGame(true);
 }
 
 function renderGame(full = false) {
@@ -301,7 +301,7 @@ function finishSplitRound() {
 
   message = results.join(" ");
   isAlive = false;
-  renderGame();
+  renderGame(true);
 }
 
 function splitHand() {
@@ -312,7 +312,7 @@ function splitHand() {
   mainHandDone = false;
   splitHandDone = false;
   message = "Playing main hand.";
-  renderGame();
+  renderGame(true);
 }
 
 function switchHand() {

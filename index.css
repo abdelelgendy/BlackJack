@@ -1,9 +1,7 @@
 /* ────────────────────────────────────────────────────
    1. Global box-sizing & theme variables
 ───────────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 :root {
   --color-primary: goldenrod;
@@ -14,58 +12,33 @@
 }
 
 body {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', Arial, sans-serif;
-    background-image: url("images/table.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    font-weight: bold;
-    color: white;
-    text-align: center;
-    font-size: 1rem;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', Arial, sans-serif;
+  background: #1a3a1a url("images/table.png") center/cover no-repeat;
+  color: white;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
 }
 
-h1 {
-    color: goldenrod;
-    font-size: 2.5rem;
-}
-
-#message-el {
-    font-style: italic;
-}
+h1 { color: goldenrod; font-size: 2.5rem; }
+#message-el { font-style: italic; }
 
 button {
-    color: #016f32;
-    width: 30vw;
-    background: goldenrod;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-weight: bold;
-    border: none;
-    border-radius: 2px;
-    margin-bottom: 2px;
-    margin-top: 2px;
-    max-width: 150px;
+  color: #016f32;
+  width: 30vw;
+  background: goldenrod;
+  padding: 5px 0;
+  font-weight: bold;
+  border: none;
+  border-radius: 2px;
+  margin: 2px 0;
+  max-width: 150px;
 }
-
 button:disabled {
   opacity: 0.5;
   background: #bfa74a;
   color: #888;
   cursor: not-allowed;
-}
-
-#cards-el, #split-el {
-  display: flex;
-  gap: 0.05em;
-  perspective: 1200px;
-}
-
-#dealer-el {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5ch;
 }
 
 /* ────────────── CARD ANIMATION SYSTEM ────────────── */
@@ -79,6 +52,23 @@ button:disabled {
   opacity: 0;
   transform: translateY(-60px) rotate(-12deg);
   animation: deal-in 0.38s cubic-bezier(.5,1.5,.5,1) forwards;
+}
+
+/* make the #cards-el div lay out its children in a horizontal row */
+#cards-el {
+  display: flex;
+  flex-direction: row;        /* left → right */
+  align-items: flex-end;      /* align bottoms of cards */
+  justify-content: center;    /* or flex-start if you want them left-aligned */
+  gap: 0.5ch;                 /* spacing between cards */
+}
+
+/* do the same for split hands if you’re using #split-el */
+#split-el {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.5ch;
 }
 
 /* Staggered deal: set inline style="animation-delay: {delay}s" in JS */
@@ -134,113 +124,22 @@ button:disabled {
 
 /* ────────────── LAYOUT & UI ────────────── */
 
-#game-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 2em;
-  flex-wrap: wrap;
-  margin-bottom: 1em;
-}
-
-.col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.actions {
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.button-row {
-  display: flex;
-  justify-content: center;
-  gap: 1em;
-  margin-bottom: 0.5em;
-  flex-wrap: wrap;
-}
-
-.main-actions {
-  margin-bottom: 1em;
-}
-
-.split-actions {
-  flex-direction: column;
-  gap: 0.5em;
-}
-
-.stats-row {
-  justify-content: space-between;
-  align-items: center;
-  gap: 2em;
-}
-
-.hand-label {
-  font-weight: bold;
-  margin-right: 0.5em;
-}
-
-.active-hand {
-  outline: 2px solid var(--color-primary);
-  box-shadow: 0 0 8px var(--color-primary);
-  border-radius: var(--radius);
-  background: rgba(255, 215, 0, 0.08);
-}
-
-#split-el {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
-  margin-top: 1em;
-}
-
-#split-el .hand-label,
-#split-el span:last-child {
-  flex-shrink: 0;
-  margin: 0 0.5em;
-}
-
-.game-message {
-  font-size: 1.3rem;
-  margin-bottom: 1em;
-  color: #fffbe7;
-  font-style: italic;
-  min-height: 2em;
-}
-
-.active-card {
-  outline: 2px solid var(--color-primary);
-  box-shadow: 0 0 8px var(--color-primary);
-  border-radius: var(--radius);
-  background: rgba(255, 215, 0, 0.18);
-}
-
-#refill-btn {
-  background: #2e8b57;
-  color: #fffbe7;
-  margin-top: 0.5em;
-}
-
-#chip-selector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7em;
-  margin-bottom: 1em;
-}
-
+#game-container { padding: 1rem; }
+.row { display: flex; justify-content: center; align-items: flex-start; gap: 2em; flex-wrap: wrap; margin-bottom: 1em; }
+.col { display: flex; flex-direction: column; align-items: flex-start; }
+.actions { align-items: center; justify-content: flex-start; }
+.button-row { display: flex; justify-content: center; gap: 1em; margin-bottom: 0.5em; flex-wrap: wrap; }
+.main-actions { margin-bottom: 1em; }
+.split-actions { flex-direction: column; gap: 0.5em; }
+.stats-row { justify-content: space-between; align-items: center; gap: 2em; }
+.hand-label { font-weight: bold; margin-right: 0.5em; }
+.active-hand { outline: 2px solid var(--color-primary); box-shadow: 0 0 8px var(--color-primary); border-radius: var(--radius); background: rgba(255, 215, 0, 0.08); }
+#split-el { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5em; margin-top: 1em; }
+#split-el .hand-label, #split-el span:last-child { flex-shrink: 0; margin: 0 0.5em; }
+.game-message { font-size: 1.3rem; margin-bottom: 1em; color: #fffbe7; font-style: italic; min-height: 2em; }
+.active-card { outline: 2px solid var(--color-primary); box-shadow: 0 0 8px var(--color-primary); border-radius: var(--radius); background: rgba(255, 215, 0, 0.18); }
+#refill-btn { background: #2e8b57; color: #fffbe7; margin-top: 0.5em; }
+#chip-selector { display: flex; align-items: center; justify-content: center; gap: 0.7em; margin-bottom: 1em; }
 .chip-btn {
   border-radius: 50%;
   width: 54px;
@@ -259,47 +158,39 @@ button:disabled {
   padding: 0;
   outline: none;
 }
-
-.chip-btn.selected-chip,
-.chip-btn:focus {
+.chip-btn.selected-chip, .chip-btn:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 12px 2px var(--color-primary);
   transform: scale(1.08);
 }
-
 .chip-btn[data-value="1"] {
   background: radial-gradient(circle at 60% 40%, #fff 70%, #bbb 100%);
   color: #222;
   text-shadow: 0 1px 2px #fff, 0 0 2px #bbb;
 }
-
 .chip-btn[data-value="5"] {
   background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #e33 100%);
   color: #fff;
   text-shadow: 0 1px 2px #a00, 0 0 2px #fffbe7, 0 0 2px #e33;
   border-color: #a00;
 }
-
 .chip-btn[data-value="25"] {
   background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #2e8b57 100%);
   color: #fff;
   text-shadow: 0 1px 2px #155, 0 0 2px #fffbe7, 0 0 2px #2e8b57;
   border-color: #155;
 }
-
 .chip-btn[data-value="100"] {
   background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #1e90ff 100%);
   color: #fff;
   text-shadow: 0 1px 2px #015, 0 0 2px #fffbe7, 0 0 2px #1e90ff;
   border-color: #015;
 }
-
 .chip-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
 }
-
 .bet-display {
   color: #fffbe7;
   font-size: 1.1rem;
@@ -316,53 +207,36 @@ button:disabled {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Responsive */
 @media (max-width: 600px) {
-  .button-row {
-    flex-direction: column;
-    gap: 0.5em;
-    align-items: center;
-  }
-  .button-row button {
-    width: 80vw;
-    max-width: 300px;
-  }
+  .button-row { flex-direction: column; gap: 0.5em; align-items: center; }
+  .button-row button { width: 80vw; max-width: 300px; }
+
+  /* Comment out or remove the next line to fix vertical stacking: */
+  /*
   #cards-el, #split-el {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.2em;
   }
+  */
 }
-
 @media (max-width: 400px) {
-  button {
-    width: 40vw;
-    font-size: 0.9rem;
-  }
-  .card {
-    font-size: 1.2rem;
-    padding: 0.2em 0.4em;
-  }
+  button { width: 40vw; font-size: 0.9rem; }
 }
-
 @media (min-width: 1200px) {
-  #game-container {
-    max-width: 800px;
-    margin: 0 auto;      /* center on very wide screens */
-  }
+  #game-container { max-width: 800px; margin: 0 auto; }
+}
+@media (max-width: 800px) {
+  .row { flex-direction: column; align-items: center; gap: 1em; }
+  .col { align-items: center; }
+  .stats-row { flex-direction: column; gap: 0.5em; }
 }
 
-@media (max-width: 800px) {
-  .row {
-    flex-direction: column;
-    align-items: center;
-    gap: 1em;
-  }
-  .col {
-    align-items: center;
-  }
-  .stats-row {
-    flex-direction: column;
-    gap: 0.5em;
-  }
+#dealer-el {
+  display: flex;
+  flex-direction: row;        /* lay cards out left → right */
+  align-items: flex-end;      /* align bottoms of cards */
+  gap: var(--gap);            /* match the other card spacing */
 }
 
