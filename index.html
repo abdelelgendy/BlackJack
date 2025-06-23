@@ -4,19 +4,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <div id="game-container"></div>
+        <div id="game-container">
             <h1>Blackjack</h1>
-            <p id="message-el">Want to play a round?</p>
-            <p id="dealer-el">Dealer:</p>
-            <p id="cards-el">Cards:</p>
-            <p id="sum-el">Sum:</p>
-            <button id="start-game-btn" onclick="startGame()">START GAME</button>
-            <button id="new-card-btn" onclick="newCard()">NEW CARD</button>
-            <button id="stand-btn" onclick="stand()">STAND</button>
-            <p id="stats-el">Wins: 0 Losses: 0</p>
-            <p id="player-el"></p>
-            <script src="index.js"></script>
+            <p id="message-el" class="game-message">Want to play a round?</p>
+            <div class="row">
+                <div class="col" style="flex:2;">
+                    <p id="dealer-el">Dealer:</p>
+                    <p id="cards-el">Cards:</p>
+                    <p id="sum-el">Sum:</p>
+                    <div id="split-el"></div>
+                </div>
+                <div class="col actions" style="flex:1;">
+                    <div class="button-row main-actions">
+                        <button id="start-game-btn" onclick="startGame()">START GAME</button>
+                        <button id="new-card-btn" onclick="newCard()">HIT</button>
+                        <button id="stand-btn" onclick="stand()">STAND</button>
+                    </div>
+                    <div class="button-row split-actions">
+                        <button id="split-btn" onclick="splitHand()">SPLIT</button>
+                        <button id="switch-hand-btn" onclick="switchHand()">SWITCH HAND</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row stats-row">
+                <p id="stats-el">Wins: 0 Losses: 0 Pushes: 0</p>
+                <p id="player-el"></p>
+            </div>
         </div>
-        
+        <script src="index.js"></script>
     </body>
 </html>

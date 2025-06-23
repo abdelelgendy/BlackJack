@@ -47,9 +47,19 @@ button {
     max-width: 150px;
 }
 
-#cards-el {
+button:disabled {
+  opacity: 0.5;
+  background: #bfa74a;
+  color: #888;
+  cursor: not-allowed;
+}
+
+#cards-el, #split-el {
   margin-bottom: 0.5em;
   font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
 }
 
 .card {
@@ -85,6 +95,97 @@ button {
   padding: 0.3em 0.6em;
 }
 
+.row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2em;
+  flex-wrap: wrap;
+  margin-bottom: 1em;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.actions {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  margin-bottom: 0.5em;
+  flex-wrap: wrap;
+}
+
+.main-actions {
+  margin-bottom: 1em;
+}
+
+.split-actions {
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.stats-row {
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+}
+
+.hand-label {
+  font-weight: bold;
+  margin-right: 0.5em;
+}
+
+.active-hand {
+  outline: 2px solid var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  border-radius: var(--radius);
+  background: rgba(255, 215, 0, 0.08);
+}
+
+#split-el {
+  margin-top: 0.5em;
+}
+
+.game-message {
+  font-size: 1.3rem;
+  margin-bottom: 1em;
+  color: #fffbe7;
+  font-style: italic;
+  min-height: 2em;
+}
+
+.active-card {
+  outline: 2px solid var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  border-radius: var(--radius);
+  background: rgba(255, 215, 0, 0.18);
+}
+
+@media (max-width: 600px) {
+  .button-row {
+    flex-direction: column;
+    gap: 0.5em;
+    align-items: center;
+  }
+  .button-row button {
+    width: 80vw;
+    max-width: 300px;
+  }
+  #cards-el, #split-el {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2em;
+  }
+}
+
 @media (max-width: 400px) {
   button {
     width: 40vw;
@@ -100,6 +201,21 @@ button {
   #game-container {
     max-width: 800px;
     margin: 0 auto;      /* center on very wide screens */
+  }
+}
+
+@media (max-width: 800px) {
+  .row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+  }
+  .col {
+    align-items: center;
+  }
+  .stats-row {
+    flex-direction: column;
+    gap: 0.5em;
   }
 }
 

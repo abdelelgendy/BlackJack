@@ -45,7 +45,6 @@ const RANKS = [
 
 
 
-
 function calculate(hand) {
   let total = 0;
   // sum raw values
@@ -66,8 +65,12 @@ function calculate(hand) {
 function startGame() {
   cards = [];
   dealerHand = [];
-  isAlive = true
-  hasBlackJack = false
+  isAlive = true;
+  hasBlackJack = false;
+  splitActive = false;
+  splitHandArr = [];
+  splitSum = 0;
+  playingSplit = false;
 
   // deal two card objects
   const firstCard  = drawCard()
@@ -82,9 +85,10 @@ function startGame() {
 
 
 function renderGame() {
-  //  Calculate player total with Ace-adjust logic
   sum = calculate(cards);
-  //check for bj or bust 
+  splitSum = calculate(splitHandArr);
+
+  // check for bj or bust 
    if (isAlive) {
     if (sum === 21) {
       message      = "You've got Blackjack!";
@@ -118,14 +122,56 @@ function renderGame() {
     dealerEl.innerHTML = html;
   }
 
-  //  Render player’s cards (same approach)
-  let playerHtml = 'Cards: ';
-  for (let card of cards) {
+  // Render player's cards (main hand)
+  let playerHtml = `<span class="hand-label">Main:</span>`;
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
     const isRed = (card.suit === '♥' || card.suit === '♦');
-    playerHtml += `<span class="card${isRed ? ' red' : ''}">` +
+    // Only highlight main hand cards if main hand is active (not playingSplit)
+    const activeClass = (splitActive && !playingSplit) ? ' active-card' : '';
+    playerHtml += `<span class="card${isRed ? ' red' : ''}${activeClass}">` +
                   `${card.rankName}${card.suit}</span> `;
   }
   cardsEl.innerHTML = playerHtml;
+  cardsEl.className = ""; // Remove hand highlight
+
+  // Render split hand if active
+  let splitEl = document.getElementById('split-el');
+  if (!splitEl) {
+    splitEl = document.createElement('p');
+    splitEl.id = 'split-el';
+    cardsEl.parentNode.insertBefore(splitEl, cardsEl.nextSibling);
+  }
+  if (splitActive) {
+    let splitHtml = `<span class="hand-label">Split:</span>`;
+    for (let i = 0; i < splitHandArr.length; i++) {
+      const card = splitHandArr[i];
+      const isRed = (card.suit === '♥' || card.suit === '♦');
+      // Only highlight split hand cards if split hand is active (playingSplit)
+      const activeClass = (splitActive && playingSplit) ? ' active-card' : '';
+      splitHtml += `<span class="card${isRed ? ' red' : ''}${activeClass}">` +
+                   `${card.rankName}${card.suit}</span> `;
+    }
+    splitHtml += `<span>(Sum: ${splitSum})</span>`;
+    splitEl.innerHTML = splitHtml;
+    splitEl.className = '';
+  } else {
+    splitEl.innerHTML = '';
+    splitEl.className = '';
+  }
+
+  // Enable Split button only if allowed
+  const splitBtn = document.getElementById('split-btn');
+  const canSplit =
+    isAlive &&
+    cards.length === 2 &&
+    cards[0].value === cards[1].value &&
+    !splitActive;
+  splitBtn.disabled = !canSplit;
+
+  // Enable Switch Hand only if split is active
+  const switchBtn = document.getElementById('switch-hand-btn');
+  switchBtn.disabled = !splitActive;
 
   // Update sum, message, buttons, and stats
   sumEl.textContent = "Sum: " + sum;
@@ -141,9 +187,16 @@ function renderGame() {
 
 function newCard() {
   if (isAlive && !hasBlackJack) {
-    const card = drawCard()
-    cards.push(card)
-    renderGame()
+    if (splitActive && !playingSplit) {
+      cards.push(drawCard());
+      renderGame();
+    } else if (splitActive && playingSplit) {
+      splitHandArr.push(drawCard());
+      renderGame();
+    } else {
+      cards.push(drawCard());
+      renderGame();
+    }
   }
 }
 
@@ -187,4 +240,34 @@ function stand() {
  
   renderGame();
 
+}
+
+let splitActive = false;
+let splitHandArr = [];
+let splitSum = 0;
+let playingSplit = false;
+
+function splitHand() {
+  if (
+    isAlive &&
+    cards.length === 2 &&
+    cards[0].value === cards[1].value &&
+    !splitActive
+  ) {
+    splitActive = true;
+    splitHandArr = [cards.pop()]; // Move one card to split hand
+    cards.push(drawCard());       // Draw one card for main hand
+    splitHandArr.push(drawCard()); // Draw one card for split hand
+    playingSplit = false;
+    renderGame();
+    document.getElementById('split-btn').disabled = true;
+  }
+}
+
+function switchHand() {
+  if (splitActive) {
+    playingSplit = !playingSplit;
+    message = playingSplit ? "Playing split hand" : "Playing main hand";
+    renderGame();
+  }
 }
