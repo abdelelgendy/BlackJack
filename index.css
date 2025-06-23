@@ -64,14 +64,44 @@ button:disabled {
   gap: 0.5em;
 }
 
+
+/* Style for individual card */
 .card {
   display: inline-block;
-  margin: 0 0.5ch;
-  padding: 0.2em 0.4em;
-  border: 1px solid #fff;
-  border-radius: 0.25em;
-  background: rgba(255,255,255,0.1);
+  aspect-ratio: 2/3;              /* Correct aspect ratio for cards */
+  width: 110px;                   /* Adjust card width */
+  margin: 0.5em;                  /* Add some margin around each card */
+  border: none;                   /* Remove border */
+  border-radius: 8px;             /* Rounded corners */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25); /* Soft shadow for depth */
+  background: transparent;        /* No background */
+  vertical-align: middle;         /* Align cards properly */
+  padding: 0;
+  overflow: hidden;               /* Ensure no overflow of content */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Hover effects */
+  clip-path: inset(10% 16% 10% 16%); /* Optional: for card cropping (adjust as needed) */
+  flex: 0 1 auto;         /* shrink/grow as needed */
+  font-size: 1.5rem;      /* you can also use vw: font-size: 4vw; */
+  padding: 0.3em 0.6em;
 }
+
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;             /* Ensure the image fits inside the card */
+  display: block;                  /* Block-level display to avoid any gaps */
+  border-radius: 8px;              /* Round corners for image */
+  background: none !important;     /* Ensure no background */
+  margin: 0;
+  padding: 0;
+}
+
+/* Hover effect for interaction */
+.card:hover {
+  transform: scale(1.05);          /* Slightly enlarge the card on hover */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35); /* Darker shadow for 3D effect */
+}
+
 
 .card.red {
   color: #e33;
@@ -91,11 +121,7 @@ button:disabled {
   justify-content: center;
   gap: 0.5ch;
 }
-.card {
-  flex: 0 1 auto;         /* shrink/grow as needed */
-  font-size: 1.5rem;      /* you can also use vw: font-size: 4vw; */
-  padding: 0.3em 0.6em;
-}
+
 
 .row {
   display: flex;

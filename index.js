@@ -143,20 +143,20 @@ function renderGame() {
       message = "Do you want to draw a new card?";
     }
   }
-  //  Render dealer’s cards
+
+  // Render dealer’s cards
   if (isAlive) {
-    const first    = dealerHand[0];
-    const redClass = (first.suit === '♥' || first.suit === '♦') ? ' red' : '';
+    const first = dealerHand[0];
+    // Use black back for black suits, red back for red suits
+    const backImg = (first.suit === "♠" || first.suit === "♣") ? "assets/back_black.png" : "assets/back_red.png";
     dealerEl.innerHTML =
       'Dealer: ' +
-      `<span class="card${redClass}">${first.rankName}${first.suit}</span> ` +
-      `<span class="card">[?]</span>`;
+      `<img class="card" src="${getCardImage(first)}" alt="${first.rankName}${first.suit}" /> ` +
+      `<img class="card" src="${backImg}" alt="Card Back" />`;
   } else {
     let html = 'Dealer: ';
     for (let card of dealerHand) {
-      const isRed = (card.suit === '♥' || card.suit === '♦');
-      html += `<span class="card${isRed ? ' red' : ''}">`
-           +  `${card.rankName}${card.suit}</span> `;
+      html += `<img class="card" src="${getCardImage(card)}" alt="${card.rankName}${card.suit}" /> `;
     }
     html += `(Total: ${calculate(dealerHand)})`;
     dealerEl.innerHTML = html;
@@ -166,14 +166,11 @@ function renderGame() {
   let playerHtml = `<span class="hand-label">Main:</span>`;
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
-    const isRed = (card.suit === '♥' || card.suit === '♦');
-    // Only highlight main hand cards if main hand is active (not playingSplit)
     const activeClass = (splitActive && !playingSplit) ? ' active-card' : '';
-    playerHtml += `<span class="card${isRed ? ' red' : ''}${activeClass}">` +
-                  `${card.rankName}${card.suit}</span> `;
+    playerHtml += `<img class="card${activeClass}" src="${getCardImage(card)}" alt="${card.rankName}${card.suit}" /> `;
   }
   cardsEl.innerHTML = playerHtml;
-  cardsEl.className = ""; // Remove hand highlight
+  cardsEl.className = "";
 
   // Render split hand if active
   let splitEl = document.getElementById('split-el');
@@ -186,11 +183,8 @@ function renderGame() {
     let splitHtml = `<span class="hand-label">Split:</span>`;
     for (let i = 0; i < splitHandArr.length; i++) {
       const card = splitHandArr[i];
-      const isRed = (card.suit === '♥' || card.suit === '♦');
-      // Only highlight split hand cards if split hand is active (playingSplit)
       const activeClass = (splitActive && playingSplit) ? ' active-card' : '';
-      splitHtml += `<span class="card${isRed ? ' red' : ''}${activeClass}">` +
-                   `${card.rankName}${card.suit}</span> `;
+      splitHtml += `<img class="card${activeClass}" src="${getCardImage(card)}" alt="${card.rankName}${card.suit}" /> `;
     }
     splitHtml += `<span>(Sum: ${splitSum})</span>`;
     splitEl.innerHTML = splitHtml;
@@ -320,4 +314,16 @@ function refillChips() {
   message = `Added $${amount} to your chips!`;
   playerEl.textContent = player.name + ": $" + player.chips;
   renderGame();
+}
+
+function getCardImage(card) {
+    let suitName = "";
+    switch (card.suit) {
+        case "♠": suitName = "spade"; break;
+        case "♣": suitName = "club"; break;
+        case "♥": suitName = "Heart"; break;
+        case "♦": suitName = "Diamond"; break;
+    }
+    let rank = card.rankName;
+    return `assets/${suitName}_${rank}.png`;
 }
