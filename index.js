@@ -1,6 +1,6 @@
 let player = {
-    name: "abdel",
-    chips: 200
+    name: "Player",
+    chips: 0
 }
 
 let wins = 0;
@@ -8,6 +8,7 @@ let losses = 0;
 let pushes = 0;
 
 const statsEl = document.getElementById('stats-el');
+const BET_AMOUNT = 20;
 
 
 
@@ -24,8 +25,7 @@ let playerEl = document.getElementById("player-el")
 let dealerEl  = document.getElementById("dealer-el")
 
 
-playerEl.textContent = player.name + ": $" + player.chips
-// in index.js, at the top
+playerEl.textContent = player.name + ": $" + player.chips;
 const SUITS = ["♠", "♥", "♦", "♣"];
 const RANKS = [
   { name: "A", value: 11 },
@@ -61,8 +61,45 @@ function calculate(hand) {
   return total;
 }
 
+let currentBet = 1; // Default bet
+
+function updateBetDisplay() {
+    document.getElementById('bet-display').textContent = `Bet: $${currentBet}`;
+    // Highlight selected chip
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+        btn.classList.toggle('selected-chip', parseInt(btn.dataset.value, 10) === currentBet);
+    });
+}
+
+// Chip button event listeners
+document.querySelectorAll('.chip-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        currentBet = parseInt(this.dataset.value, 10);
+        updateBetDisplay();
+    });
+});
+
+function getBetAmount() {
+    return currentBet;
+}
 
 function startGame() {
+  const bet = getBetAmount();
+  if (bet < 1) {
+    message = "Bet must be at least $1!";
+    isAlive = false;
+    hasBlackJack = false;
+    renderGame();
+    return;
+  }
+  if (player.chips < bet) {
+    message = "You don't have enough chips to play!";
+    isAlive = false;
+    hasBlackJack = false;
+    renderGame();
+    return;
+  }
+
   cards = [];
   dealerHand = [];
   isAlive = true;
@@ -85,20 +122,23 @@ function startGame() {
 
 
 function renderGame() {
+  const bet = getBetAmount();
   sum = calculate(cards);
   splitSum = calculate(splitHandArr);
 
   // check for bj or bust 
-   if (isAlive) {
+  if (isAlive) {
     if (sum === 21) {
       message      = "You've got Blackjack!";
       hasBlackJack = true;
       isAlive      = false;
       wins++;
+      player.chips += Math.floor(bet * 1.5); // Blackjack pays 3:2
     } else if (sum > 21) {
       message = "You're out of the game!";
       isAlive = false;
       losses++;
+      player.chips -= bet;
     } else {
       message = "Do you want to draw a new card?";
     }
@@ -181,6 +221,8 @@ function renderGame() {
   document.getElementById('start-game-btn').disabled  =  isAlive;
   statsEl.textContent = `Wins: ${wins} Losses: ${losses} Pushes: ${pushes}`;
 
+  // Always update player money display at the end
+  playerEl.textContent = player.name + ": $" + player.chips;
 }
 
 
@@ -213,33 +255,32 @@ function drawCard() {
 }
 
 function stand() {
-  // compute both totals
-  const playerSum = sum;             // your global sum was just calculated in renderGame()
+  const bet = getBetAmount();
+  const playerSum = sum;
   let dealerSum  = calculate(dealerHand);
 
-  // dealer draws to 17+
   while (dealerSum < 17) {
     dealerHand.push(drawCard());
     dealerSum = calculate(dealerHand);
   }
 
-  // determine outcome
-    if (dealerSum > 21 || playerSum > dealerSum) {
-        message = "You win!";
-        wins++;
-      } else if (playerSum < dealerSum) {
-        message = "Dealer wins...";
-        losses++;
-      } else {
-        message = "Push (tie).";
-        pushes++;                 // ⬅️ track the tie
-      }
+  if (dealerSum > 21 || playerSum > dealerSum) {
+    message = "You win!";
+    wins++;
+    player.chips += bet;
+  } else if (playerSum < dealerSum) {
+    message = "Dealer wins...";
+    losses++;
+    player.chips -= bet;
+  } else {
+    message = "Push (tie).";
+    pushes++;
+    // No chip change on push
+  }
 
-  isAlive = false;       // round over
-  hasBlackJack = false;  // clear any blackjack flag
- 
+  isAlive = false;
+  hasBlackJack = false;
   renderGame();
-
 }
 
 let splitActive = false;
@@ -270,4 +311,13 @@ function switchHand() {
     message = playingSplit ? "Playing split hand" : "Playing main hand";
     renderGame();
   }
+}
+
+function refillChips() {
+  // You can prompt for a custom amount, or just add a fixed amount
+  const amount = 200; // or prompt("How much to add?", 200);
+  player.chips += amount;
+  message = `Added $${amount} to your chips!`;
+  playerEl.textContent = player.name + ": $" + player.chips;
+  renderGame();
 }

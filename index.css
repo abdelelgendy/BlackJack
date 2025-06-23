@@ -18,6 +18,8 @@ body {
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', Arial, sans-serif;
     background-image: url("images/table.png");
     background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     font-weight: bold;
     color: white;
     text-align: center;
@@ -167,6 +169,87 @@ button:disabled {
   box-shadow: 0 0 8px var(--color-primary);
   border-radius: var(--radius);
   background: rgba(255, 215, 0, 0.18);
+}
+
+#refill-btn {
+  background: #2e8b57;
+  color: #fffbe7;
+  margin-top: 0.5em;
+}
+
+#chip-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7em;
+  margin-bottom: 1em;
+}
+
+.chip-btn {
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0;
+  cursor: pointer;
+  border: 3px solid #bfa74a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+  padding: 0;
+  outline: none;
+}
+
+.chip-btn.selected-chip,
+.chip-btn:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px 2px var(--color-primary);
+  transform: scale(1.08);
+}
+
+.chip-btn[data-value="1"] {
+  background: radial-gradient(circle at 60% 40%, #fff 70%, #bbb 100%);
+  color: #222;
+  text-shadow: 0 1px 2px #fff, 0 0 2px #bbb;
+}
+
+.chip-btn[data-value="5"] {
+  background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #e33 100%);
+  color: #fff;
+  text-shadow: 0 1px 2px #a00, 0 0 2px #fffbe7, 0 0 2px #e33;
+  border-color: #a00;
+}
+
+.chip-btn[data-value="25"] {
+  background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #2e8b57 100%);
+  color: #fff;
+  text-shadow: 0 1px 2px #155, 0 0 2px #fffbe7, 0 0 2px #2e8b57;
+  border-color: #155;
+}
+
+.chip-btn[data-value="100"] {
+  background: radial-gradient(circle at 60% 40%, #fffbe7 60%, #1e90ff 100%);
+  color: #fff;
+  text-shadow: 0 1px 2px #015, 0 0 2px #fffbe7, 0 0 2px #1e90ff;
+  border-color: #015;
+}
+
+.chip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.bet-display {
+  color: #fffbe7;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-left: 1.2em;
+  letter-spacing: 1px;
 }
 
 @media (max-width: 600px) {
