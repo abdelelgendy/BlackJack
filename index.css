@@ -56,12 +56,9 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Reduce the gap between cards to zero */
 #cards-el, #split-el {
-  margin-bottom: 0.5em;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
+  gap: 0.05em; /* No gap in the container */
 }
 
 
@@ -70,7 +67,7 @@ button:disabled {
   display: inline-block;
   aspect-ratio: 2/3;              /* Correct aspect ratio for cards */
   width: 110px;                   /* Adjust card width */
-  margin: 0.5em;                  /* Add some margin around each card */
+  margin: 0;                      /* No margin between cards */
   border: none;                   /* Remove border */
   border-radius: 8px;             /* Rounded corners */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25); /* Soft shadow for depth */
@@ -83,6 +80,9 @@ button:disabled {
   flex: 0 1 auto;         /* shrink/grow as needed */
   font-size: 1.5rem;      /* you can also use vw: font-size: 4vw; */
   padding: 0.3em 0.6em;
+  margin-left: -20px;              /* Bring cards closer together despite clip-path */
+  margin-right: -20px;             /* Bring cards closer together despite clip-path */
+  animation: deal 0.1s ease-out;  /* Dealing animation */
 }
 
 .card img {
@@ -179,7 +179,18 @@ button:disabled {
 }
 
 #split-el {
-  margin-top: 0.5em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  margin-top: 1em; /* Adjust vertical spacing as needed */
+}
+
+#split-el .hand-label,
+#split-el span:last-child {
+  flex-shrink: 0;
+  margin: 0 0.5em;
 }
 
 .game-message {
@@ -278,6 +289,50 @@ button:disabled {
   letter-spacing: 1px;
 }
 
+/* Keyframes for the dealing animation */
+@keyframes deal {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px) rotate(-15deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(10px) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* Apply the dealing animation with a slower duration */
+.card {
+  /* Other properties remain unchanged */
+  animation: deal 1.5s ease-out;  /* Increased from 0.6s to 1.5s */
+}
+
+/* Stagger cards with delays for a sequential effect */
+#cards-el .card:nth-child(1) {
+  animation-delay: 0.2s;
+}
+#cards-el .card:nth-child(2) {
+  animation-delay: 0.4s;
+}
+#cards-el .card:nth-child(3) {
+  animation-delay: 0.6s;
+}
+#cards-el .card:nth-child(4) {
+  animation-delay: 0.8s;
+}
+/* Adjust further as needed */
+
+/* Similarly, apply staggering to dealer cards if desired */
+#dealer-el .card:nth-child(1) {
+  animation-delay: 0.2s;
+}
+#dealer-el .card:nth-child(2) {
+  animation-delay: 0.4s;
+}
 @media (max-width: 600px) {
   .button-row {
     flex-direction: column;
@@ -326,5 +381,13 @@ button:disabled {
     flex-direction: column;
     gap: 0.5em;
   }
+}
+
+/* Add this style to your CSS */
+.focused-card {
+  outline: 4px solid var(--color-primary);
+  box-shadow: 0 0 12px var(--color-primary);
+  transform: scale(1.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
