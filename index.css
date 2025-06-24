@@ -133,11 +133,11 @@ button:disabled {
 .split-actions { flex-direction: column; gap: 0.5em; }
 .stats-row { justify-content: space-between; align-items: center; gap: 2em; }
 .hand-label { font-weight: bold; margin-right: 0.5em; }
-.active-hand { outline: 2px solid var(--color-primary); box-shadow: 0 0 8px var(--color-primary); border-radius: var(--radius); background: rgba(255, 215, 0, 0.08); }
+.active-hand { outline: none; box-shadow: none; background: transparent; }
 #split-el { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5em; margin-top: 1em; }
 #split-el .hand-label, #split-el span:last-child { flex-shrink: 0; margin: 0 0.5em; }
 .game-message { font-size: 1.3rem; margin-bottom: 1em; color: #fffbe7; font-style: italic; min-height: 2em; }
-.active-card { outline: 2px solid var(--color-primary); box-shadow: 0 0 8px var(--color-primary); border-radius: var(--radius); background: rgba(255, 215, 0, 0.18); }
+.active-card { outline: none; box-shadow: none; background: transparent; }
 #refill-btn { background: #2e8b57; color: #fffbe7; margin-top: 0.5em; }
 #chip-selector { display: flex; align-items: center; justify-content: center; gap: 0.7em; margin-bottom: 1em; }
 .chip-btn {
