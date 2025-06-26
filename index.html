@@ -14,8 +14,13 @@
                 <div class="col" style="flex:2;">
                     <p id="dealer-el">Dealer:</p>
                     <div id="dealer-cards" style="display: flex; flex-direction: row; align-items: flex-end; gap: 0.5ch;"></div>
+                    
+                    <span id="main-hand-label" class="hand-label" style="display:none;">Main Hand</span>
                     <div id="cards-el"></div>
+                    
                     <p id="sum-el">Sum:</p>
+                    
+                    <span id="split-hand-label" class="hand-label" style="display:none;">Split Hand</span>
                     <div id="split-el"></div>
                 </div>
                 <div class="col actions" style="flex:1;">
@@ -34,7 +39,6 @@
                     </div>
                     <div class="button-row split-actions">
                         <button id="split-btn" onclick="splitHand()">SPLIT</button>
-                        <button id="switch-hand-btn" onclick="switchHand()">SWITCH HAND</button>
                     </div>
                 </div>
             </div>

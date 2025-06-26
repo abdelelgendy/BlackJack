@@ -111,16 +111,7 @@ button:disabled {
 .card-back  { transform: rotateY(0); }
 .card-front { transform: rotateY(180deg); }
 
-/* ────────────── REMOVE OLD .card RULES ────────────── */
-/* The following block is removed to prevent interference:
-.card { ... }
-.card img { ... }
-.card:hover { ... }
-.card.red { ... }
-#cards-el .card:nth-child(n) { ... }
-#dealer-el .card:nth-child(n) { ... }
-@keyframes deal { ... }
-*/
+
 
 /* ────────────── LAYOUT & UI ────────────── */
 

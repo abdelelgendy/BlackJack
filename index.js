@@ -383,13 +383,6 @@ function splitHand() {
   renderGame(true);
 }
 
-/** Switch between main and split */
-function switchHand() {
-  if (!splitActive || !isAlive) return;
-  playingMain = !playingMain;
-  message = playingMain ? "Playing main hand." : "Playing split hand.";
-  renderGame();
-}
 
 /** Refill player chips */
 function refillChips() {
