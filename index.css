@@ -132,16 +132,7 @@ button:disabled {
 .main-actions { margin-bottom: 1em; }
 .split-actions { flex-direction: column; gap: 0.5em; }
 .stats-row { justify-content: space-between; align-items: center; gap: 2em; }
-.hand-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 0.3em;
-  margin-left: 0;
-  font-size: 1.1em;
-  color: #fffbe7;
-  transition: color 0.2s, font-weight 0.2s;
-}
-.hand-label.active { color: var(--color-primary); font-weight: bold; }
+.hand-label { font-weight: bold; margin-right: 0.5em; }
 .active-hand { outline: none; box-shadow: none; background: transparent; }
 #split-el { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5em; margin-top: 1em; }
 #split-el .hand-label, #split-el span:last-child { flex-shrink: 0; margin: 0 0.5em; }
@@ -207,16 +198,6 @@ button:disabled {
   margin-left: 1.2em;
   letter-spacing: 1px;
 }
-.game-btn{
-  background: var(--color-secondary);
-  color: #fffbe7;
-  padding: 0.5em 1em;
-  border-radius: var(--radius);
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s, transform 0.1s;
-}
 
 /* Focused card style for active interactions */
 .focused-card {
@@ -224,13 +205,6 @@ button:disabled {
   box-shadow: 0 0 12px var(--color-primary);
   transform: scale(1.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Raised hand effect */
-.raised-hand {
-  transform: translateY(-32px);
-  transition: transform 0.25s cubic-bezier(.5,1.5,.5,1);
-  z-index: 2;
 }
 
 /* Responsive */

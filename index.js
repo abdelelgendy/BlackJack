@@ -195,30 +195,11 @@ function updateStats() {
   document.getElementById('stand-btn').disabled      = !isAlive || hasBlackJack;
   document.getElementById('start-game-btn').disabled = isAlive;
   document.getElementById('split-btn').disabled = !(isAlive && cards.length === 2 && cards[0].value === cards[1].value && !splitActive);
-  document.getElementById('switch-hand-btn') && (document.getElementById('switch-hand-btn').disabled = !splitActive || !isAlive);
+  document.getElementById('switch-hand-btn').disabled = !splitActive || !isAlive;
 
   // Highlight whichever hand is active if split
   cardsEl.classList.toggle('active-hand', splitActive &&  playingMain);
   document.getElementById('split-el').classList.toggle('active-hand', splitActive && !playingMain);
-
-  // --- HAND LABELS & RAISED EFFECT ---
-  const mainLabel  = document.getElementById('main-hand-label');
-  const splitLabel = document.getElementById('split-hand-label');
-  if (splitActive) {
-    mainLabel.style.display  = '';
-    splitLabel.style.display = '';
-    mainLabel.classList.toggle('active', playingMain);
-    splitLabel.classList.toggle('active', !playingMain);
-
-    // Raise the active hand
-    cardsEl.classList.toggle('raised-hand', playingMain);
-    document.getElementById('split-el').classList.toggle('raised-hand', !playingMain);
-  } else {
-    mainLabel.style.display  = 'none';
-    splitLabel.style.display = 'none';
-    cardsEl.classList.remove('raised-hand');
-    document.getElementById('split-el').classList.remove('raised-hand');
-  }
 }
 
 // ────────────── GAME LOGIC ──────────────
@@ -226,29 +207,20 @@ function startGame() {
   // Set up new round
   cards = [drawCard(), drawCard()];
   dealerHand = [drawCard(), drawCard()];
+  // Clear the dealer-cards container so it’s fully refreshed:
   dealerEl.innerHTML = '';
 
+  // Continue game initialization
   isAlive = true;
   hasBlackJack = false;
   splitActive = false;
-  playingMain = true;
-  mainHandDone = false;
-  splitHandDone = false;
+  playingMain = true;    // true if we’re hitting the main hand, false if we’re hitting the split
+  mainHandDone = false;  // true if main hand has busted or stood
+  splitHandDone = false; // true if split hand has busted or stood
 
   playerEl.textContent = player.name + ": $" + player.chips;
 
   message = "";
-
-  // --- ADD THIS BLOCK ---
-  if (calculate(cards) === 21) {
-    hasBlackJack = true;
-    isAlive = false;
-    wins++;
-    player.chips += Math.floor(currentBet * 1.5);
-    message = "Blackjack! You win!";
-  }
-  // --- END BLOCK ---
-
   renderGame(true);
 }
 
@@ -411,7 +383,13 @@ function splitHand() {
   renderGame(true);
 }
 
-
+/** Switch between main and split */
+function switchHand() {
+  if (!splitActive || !isAlive) return;
+  playingMain = !playingMain;
+  message = playingMain ? "Playing main hand." : "Playing split hand.";
+  renderGame();
+}
 
 /** Refill player chips */
 function refillChips() {
