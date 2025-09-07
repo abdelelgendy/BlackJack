@@ -9,9 +9,12 @@ const cardsEl   = document.getElementById("cards-el");
 const playerEl  = document.getElementById("player-el");
 // We no longer treat #dealer-el as the container for card divs.
 // Instead, it’s just a label. We'll create a dedicated <div id="dealer-cards">
-const dealerEl  = document.getElementById("dealer-cards") || document.createElement("div");
-dealerEl.id = "dealer-cards"; 
-document.getElementById("dealer-el").after(dealerEl);
+let dealerEl = document.getElementById("dealer-cards");
+if (!dealerEl) {
+  dealerEl = document.createElement("div");
+  dealerEl.id = "dealer-cards";
+  document.getElementById("dealer-el").after(dealerEl);
+}
 
 let dealerHand = [], cards = [], splitHandArr = [];
 let hasBlackJack = false, isAlive = false;
@@ -48,10 +51,10 @@ function getCardImage(card) {
   switch (card.suit) {
     case "♠": suitName = "spade";   break;
     case "♣": suitName = "club";    break;
-    case "♥": suitName = "Heart";   break;
-    case "♦": suitName = "Diamond"; break;
+    case "♥": suitName = "heart";   break;
+    case "♦": suitName = "diamond"; break;
   }
-  return `assets/${suitName}_${card.rankName}.png`;
+  return `assets/${suitName.toLowerCase()}_${card.rankName}.png`;
 }
 
 // Return a red or black card-back
@@ -191,7 +194,17 @@ function updateStats() {
   playerEl.textContent  = player.name + ": $" + player.chips;
 
   // Disable/enable your action buttons
-  document.getElementById('new-card-btn').disabled   = !isAlive || hasBlackJack;
+  document.getElementById('split-btn').disabled = !(
+    isAlive &&
+    cards.length === 2 &&
+    (
+      // Allow splitting for all value-10 cards (J, Q, K, 10)
+      (cards[0].value === 10 && cards[1].value === 10) ||
+      // Or if both cards have the same rank (e.g., 8 & 8)
+      (cards[0].rankName === cards[1].rankName)
+    ) &&
+    !splitActive
+  );
   document.getElementById('stand-btn').disabled      = !isAlive || hasBlackJack;
   document.getElementById('start-game-btn').disabled = isAlive;
   document.getElementById('split-btn').disabled = !(isAlive && cards.length === 2 && cards[0].value === cards[1].value && !splitActive);
@@ -374,24 +387,35 @@ function finishSplitRound() {
 /** Split only if both cards have equal value (e.g., 8 & 8) */
 function splitHand() {
   if (!isAlive || splitActive || cards.length !== 2 || cards[0].value !== cards[1].value) return;
-  splitActive   = true;
-  splitHandArr  = [cards.pop()];
-  playingMain   = true;
-  mainHandDone  = false;
-  splitHandDone = false;
-  message = "Playing main hand.";
+/** Refill player chips */
+const MAX_CHIPS = 1000;
+function refillChips() {
+  if (player.chips >= MAX_CHIPS) {
+    message = `You cannot have more than $${MAX_CHIPS} chips.`;
+  } else {
+    player.chips = Math.min(player.chips + 200, MAX_CHIPS);
+    message = `Chips refilled!`;
+  }
+  updateStats();
+  updateBetDisplay();
+}
   renderGame(true);
 }
 
 
 /** Refill player chips */
-function refillChips() {
-  player.chips += 200;
-  updateStats();
-  updateBetDisplay();
-}
-
 // Bet button event listeners
+document.querySelectorAll('.chip-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const selectedBet = parseInt(this.dataset.value, 10);
+    if (selectedBet > player.chips) {
+      messageEl.textContent = "Not enough chips for that bet!";
+      return;
+    }
+    currentBet = selectedBet;
+    updateBetDisplay();
+  });
+});Bet button event listeners
 document.querySelectorAll('.chip-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     currentBet = parseInt(this.dataset.value, 10);
