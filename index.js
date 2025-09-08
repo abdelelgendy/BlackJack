@@ -1,424 +1,358 @@
-// GLOBAL VARIABLES & ELEMENT REFERENCES
-let player = { name: "Player", chips: 200 };
-let wins = 0, losses = 0, pushes = 0;
+// Clean Blackjack logic with bet locking and auto-stand on 21
+// Uses the HTML IDs from your index.html
 
-const statsEl   = document.getElementById('stats-el');
-const messageEl = document.getElementById("message-el");
-const sumEl     = document.getElementById("sum-el");
-const cardsEl   = document.getElementById("cards-el");
-const playerEl  = document.getElementById("player-el");
-// We no longer treat #dealer-el as the container for card divs.
-// Instead, it’s just a label. We'll create a dedicated <div id="dealer-cards">
-let dealerEl = document.getElementById("dealer-cards");
-if (!dealerEl) {
-  dealerEl = document.createElement("div");
-  dealerEl.id = "dealer-cards";
-  document.getElementById("dealer-el").after(dealerEl);
-}
-
-let dealerHand = [], cards = [], splitHandArr = [];
-let hasBlackJack = false, isAlive = false;
-let message = "";
-let currentBet = 1;
-let splitActive = false;
-let playingMain = true;    // true if we’re hitting the main hand, false if we’re hitting the split
-let mainHandDone = false;  // true if main hand has busted or stood
-let splitHandDone = false; // true if split hand has busted or stood
-
-playerEl.textContent = player.name + ": $" + player.chips;
-
-// SUITS & RANKS
-const SUITS = ["♠", "♥", "♦", "♣"];
+// ───────────────────────── STATE ─────────────────────────
+const SUITS = ["♠","♥","♦","♣"];
 const RANKS = [
-  { name: "A", value: 11 }, { name: "2", value: 2 }, { name: "3", value: 3 },
-  { name: "4", value: 4 }, { name: "5", value: 5 }, { name: "6", value: 6 },
-  { name: "7", value: 7 }, { name: "8", value: 8 }, { name: "9", value: 9 },
-  { name: "10", value: 10 }, { name: "J", value: 10 }, { name: "Q", value: 10 },
-  { name: "K", value: 10 },
+  {name:"A", val:11},{name:"2", val:2},{name:"3", val:3},{name:"4", val:4},
+  {name:"5", val:5},{name:"6", val:6},{name:"7", val:7},{name:"8", val:8},
+  {name:"9", val:9},{name:"10", val:10},{name:"J", val:10},{name:"Q", val:10},{name:"K", val:10}
 ];
 
-// ────────────── HELPERS ──────────────
-function calculate(hand) {
-  let total = hand.reduce((sum, c) => sum + c.value, 0);
-  let aces  = hand.filter(c => c.value === 11).length;
-  while (total > 21 && aces--) total -= 10;
-  return total;
-}
+const el = {
+  msg: document.getElementById("message-el"),
+  sum: document.getElementById("sum-el"),
+  cards: document.getElementById("cards-el"),
+  split: document.getElementById("split-el"),
+  dealerLabel: document.getElementById("dealer-el"),
+  dealerCards: document.getElementById("dealer-cards"),
+  stats: document.getElementById("stats-el"),
+  player: document.getElementById("player-el"),
+  betDisplay: document.getElementById("bet-display"),
+  startBtn: document.getElementById("start-game-btn"),
+  hitBtn: document.getElementById("new-card-btn"),
+  standBtn: document.getElementById("stand-btn"),
+  splitBtn: document.getElementById("split-btn"),
+  refillBtn: document.getElementById("refill-btn"),
+  chipBtns: Array.from(document.querySelectorAll(".chip-btn"))
+};
 
-// Return the correct card-face image path
-function getCardImage(card) {
-  let suitName = "";
-  switch (card.suit) {
-    case "♠": suitName = "spade";   break;
-    case "♣": suitName = "club";    break;
-    case "♥": suitName = "heart";   break;
-    case "♦": suitName = "diamond"; break;
-  }
-  return `assets/${suitName.toLowerCase()}_${card.rankName}.png`;
-}
-
-// Return a red or black card-back
-function getCardBack(card) {
-  return (card.suit === "♠" || card.suit === "♣")
-    ? "assets/back_black.png"
-    : "assets/back_red.png";
-}
-
-// Draw a random card from RANKS & SUITS
-function drawCard() {
-  const rank = RANKS[Math.floor(Math.random() * RANKS.length)];
-  const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
-  return { rankName: rank.name, suit, value: rank.value };
-}
-
-// ────────────── RENDERING ──────────────
-/**
- * Renders a single card element. 
- *  - If faceDown = true, we do NOT flip it immediately.
- */
-function renderCard(card, delay, parent, faceDown = false) {
-  const dealDuration = 0.38; // seconds
-  const outer = document.createElement('div');
-  outer.className = 'card-outer';
-  outer.style.animationDelay = `${delay}s`;
-
-  const inner = document.createElement('div');
-  inner.className = 'card-inner';
-
-  inner.innerHTML = `
-    <img class="card-face card-back"  src="${getCardBack(card)}" alt="Card Back" />
-    <img class="card-face card-front" src="${getCardImage(card)}" alt="${card.rankName}${card.suit}" />
-  `;
-
-  outer.appendChild(inner);
-  parent.appendChild(outer);
-
-  // Flip face-up unless this card is intentionally facedown
-  setTimeout(() => {
-    if (!faceDown) inner.classList.add('flipped');
-  }, (delay + dealDuration) * 1000);
-}
-
-// Renders a brand-new card for the player's main/split hand
-function renderHand(hand, parentId) {
-  const parent = document.getElementById(parentId);
-  if (parent.children.length < hand.length) {
-    const i = hand.length - 1;
-    renderCard(hand[i], 0, parent);
-  }
-}
-
-// Renders a full (fresh) hand (e.g., initial deal, new game)
-function renderFullHand(hand, parentId) {
-  const parent = document.getElementById(parentId);
-  parent.innerHTML = '';
-  hand.forEach((card, i) => {
-    renderCard(card, i * 0.18, parent);
-  });
-}
-
-/**
- * Renders the dealer’s hand:
- *   - If showAll or !isAlive → reveal all cards & show total
- *   - Otherwise, show the first card face-up, second facedown
- *   - Additional dealer draws only render newly added cards
- */
-function renderDealerHand(showAll = false) {
-  const existing = dealerEl.querySelectorAll('.card-outer');
-
-  if (showAll || !isAlive) {
-    // Reveal facedown card if it’s still hidden
-    // (We do NOT clear everything, so old cards won't re-animate)
-    if (existing.length >= 2) {
-      const secondCardInner = existing[1].querySelector('.card-inner');
-      if (secondCardInner && !secondCardInner.classList.contains('flipped')) {
-        secondCardInner.classList.add('flipped');
-      }
-    }
-    // Render only any newly drawn dealer cards
-    for (let i = existing.length; i < dealerHand.length; i++) {
-      renderCard(dealerHand[i], 0, dealerEl);
-    }
-    // Show or update dealer total
-    let totalSpan = dealerEl.querySelector('.dealer-total');
-    if (!totalSpan) {
-      totalSpan = document.createElement('span');
-      totalSpan.className = 'dealer-total';
-      dealerEl.appendChild(totalSpan);
-    }
-    totalSpan.textContent = ` (Total: ${calculate(dealerHand)})`;
-
-  } else {
-    // PARTIAL: if no cards exist yet, render the first face-up & second facedown
-    if (!existing.length) {
-      dealerEl.innerHTML = '';
-      renderCard(dealerHand[0], 0, dealerEl, false);
-      // Face-down second card
-      if (dealerHand.length > 1) {
-        renderCard(dealerHand[1], 0.18, dealerEl, true);
-      }
-    } else {
-      // If new cards have been added for the dealer, only draw the new ones
-      for (let i = existing.length; i < dealerHand.length; i++) {
-        renderCard(dealerHand[i], 0, dealerEl, false);
-      }
-    }
-  }
-}
-
-// Update bet UI
-function updateBetDisplay() {
-  document.getElementById('bet-display').textContent = `Bet: $${currentBet}`;
-  document.querySelectorAll('.chip-btn').forEach(btn => {
-    btn.classList.toggle('selected-chip', parseInt(btn.dataset.value, 10) === currentBet);
-  });
-}
-
-/**
- * Show stats, handle message, and highlight the active hand if split is active.
- * Also show both main & split sums if splitting
- */
-function updateStats() {
-  const mainSum = calculate(cards);
-  const sSum    = calculate(splitHandArr);
-
-  // Show main or main+split sums together
-  if (splitActive) {
-    sumEl.textContent = `Main: ${mainSum} | Split: ${sSum}`;
-  } else {
-    sumEl.textContent = `Sum: ${mainSum}`;
-  }
-  // Update message, stats, and player's chip count
-  messageEl.textContent = message;
-  statsEl.textContent   = `Wins: ${wins} Losses: ${losses} Pushes: ${pushes}`;
-  playerEl.textContent  = player.name + ": $" + player.chips;
-
-  // Disable/enable your action buttons
-  document.getElementById('split-btn').disabled = !(
-    isAlive &&
-    cards.length === 2 &&
-    (
-      // Allow splitting for all value-10 cards (J, Q, K, 10)
-      (cards[0].value === 10 && cards[1].value === 10) ||
-      // Or if both cards have the same rank (e.g., 8 & 8)
-      (cards[0].rankName === cards[1].rankName)
-    ) &&
-    !splitActive
-  );
-  document.getElementById('stand-btn').disabled      = !isAlive || hasBlackJack;
-  document.getElementById('start-game-btn').disabled = isAlive;
-  document.getElementById('split-btn').disabled = !(isAlive && cards.length === 2 && cards[0].value === cards[1].value && !splitActive);
-  document.getElementById('switch-hand-btn').disabled = !splitActive || !isAlive;
-
-  // Highlight whichever hand is active if split
-  cardsEl.classList.toggle('active-hand', splitActive &&  playingMain);
-  document.getElementById('split-el').classList.toggle('active-hand', splitActive && !playingMain);
-}
-
-// ────────────── GAME LOGIC ──────────────
-function startGame() {
-  // Set up new round
-  cards = [drawCard(), drawCard()];
-  dealerHand = [drawCard(), drawCard()];
-  // Clear the dealer-cards container so it’s fully refreshed:
-  dealerEl.innerHTML = '';
-
-  // Continue game initialization
-  isAlive = true;
-  hasBlackJack = false;
-  splitActive = false;
-  playingMain = true;    // true if we’re hitting the main hand, false if we’re hitting the split
-  mainHandDone = false;  // true if main hand has busted or stood
-  splitHandDone = false; // true if split hand has busted or stood
-
-  playerEl.textContent = player.name + ": $" + player.chips;
-
-  message = "";
-  renderGame(true);
-}
-
-function renderGame(full = false) {
-  renderDealerHand(!isAlive); // If game is no longer alive, show all dealer cards
-
-  if (full) {
-    renderFullHand(cards, 'cards-el');
-    if (splitActive) renderFullHand(splitHandArr, 'split-el');
-    else document.getElementById('split-el').innerHTML = '';
-  } else {
-    renderHand(cards, 'cards-el');
-    if (splitActive) renderHand(splitHandArr, 'split-el');
-  }
-  updateStats();
-}
-
-/** Player hits (main or split) */
-function newCard() {
-  if (!isAlive || hasBlackJack) return;
-  if (splitActive) {
-    if (playingMain) {
-      cards.push(drawCard());
-      if (calculate(cards) > 21) {
-        mainHandDone = true;
-        playingMain = false;
-        message = "Main hand bust! Now playing split hand.";
-      }
-    } else {
-      splitHandArr.push(drawCard());
-      if (calculate(splitHandArr) > 21) {
-        splitHandDone = true;
-        message = "Split hand bust!";
-      }
-    }
-    // If both hands done, dealer finishes
-    if (mainHandDone && splitHandDone) {
-      finishSplitRound();
-      return;
-    }
-  } else {
-    // Single-hand
-    cards.push(drawCard());
-    let total = calculate(cards);
-    if (total > 21) {
-      message = "You're out of the game!";
-      isAlive = false;
-      losses++;
-      player.chips -= currentBet;
-    } else if (total === 21) {
-      message = "You've got Blackjack!";
-      hasBlackJack = true;
-      isAlive = false;
-      wins++;
-      player.chips += Math.floor(currentBet * 1.5);
-    } else {
-      message = "Do you want to draw a new card?";
-    }
-  }
-  renderGame();
-}
-
-/** Player stands (main or split) */
-function stand() {
-  if (splitActive) {
-    if (playingMain) {
-      mainHandDone = true;
-      playingMain  = false;
-      message = "Now playing split hand.";
-      renderGame();
-      return;
-    } else {
-      splitHandDone = true;
-    }
-    if (mainHandDone && splitHandDone) {
-      finishSplitRound();
-      return;
-    }
-  } else {
-    finishSingleRound();
-  }
-  renderGame();
-}
-
-/** Dealer finishes for single-hand mode */
-function finishSingleRound() {
-  // Dealer draws to >= 17
-  let dealerSum = calculate(dealerHand);
-  while (dealerSum < 17) {
-    dealerHand.push(drawCard());
-    dealerSum = calculate(dealerHand);
-  }
-  const playerSum = calculate(cards);
-  const dealerBust = dealerSum > 21;
-
-  if (playerSum > 21) {
-    message = "You bust!";
-    losses++;
-    player.chips -= currentBet;
-  } else if (dealerBust || playerSum > dealerSum) {
-    message = "You win!";
-    wins++;
-    player.chips += currentBet;
-  } else if (playerSum < dealerSum) {
-    message = "Dealer wins!";
-    losses++;
-    player.chips -= currentBet;
-  } else {
-    message = "Push!";
-    pushes++;
-  }
-  isAlive = false;
-}
-
-/** Dealer finishes for split mode */
-function finishSplitRound() {
-  let dealerSum = calculate(dealerHand);
-  while (dealerSum < 17) {
-    dealerHand.push(drawCard());
-    dealerSum = calculate(dealerHand);
-  }
-  const mainSum  = calculate(cards);
-  const splitSum = calculate(splitHandArr);
-  const dealerBust = dealerSum > 21;
-
-  let results = [];
-  [ {sum: mainSum, label: "Main"}, {sum: splitSum, label: "Split"} ].forEach(hand => {
-    if (hand.sum > 21) {
-      results.push(`${hand.label} hand busts.`);
-      losses++;
-      player.chips -= currentBet;
-    } else if (dealerBust || hand.sum > dealerSum) {
-      results.push(`${hand.label} hand wins!`);
-      wins++;
-      player.chips += currentBet;
-    } else if (hand.sum < dealerSum) {
-      results.push(`${hand.label} hand loses.`);
-      losses++;
-      player.chips -= currentBet;
-    } else {
-      results.push(`${hand.label} hand pushes.`);
-      pushes++;
-    }
-  });
-
-  message = results.join(" ");
-  isAlive = false;
-  renderGame(true);
-}
-
-/** Split only if both cards have equal value (e.g., 8 & 8) */
-function splitHand() {
-  if (!isAlive || splitActive || cards.length !== 2 || cards[0].value !== cards[1].value) return;
-/** Refill player chips */
 const MAX_CHIPS = 1000;
-function refillChips() {
-  if (player.chips >= MAX_CHIPS) {
-    message = `You cannot have more than $${MAX_CHIPS} chips.`;
-  } else {
-    player.chips = Math.min(player.chips + 200, MAX_CHIPS);
-    message = `Chips refilled!`;
+const GameState = { BETTING:"Betting", PLAYER:"PlayerTurn", DEALER:"DealerTurn", SETTLE:"Settlement" };
+
+let player = { name:"Player", chips:200 };
+let wins=0, losses=0, pushes=0;
+let currentBet = 1;
+let lockedBet = 0;
+let gameState = GameState.BETTING;
+
+// hands
+let playerHand = [];
+let splitHand = [];
+let dealerHand = []; // [up, hole, ...]
+
+let playingSplit = false; // which hand is active in PLAYER state
+let splitMode = false;
+let dealt = false;
+
+// ───────────────────────── HELPERS ─────────────────────────
+function calcTotals(cards){
+  let totals=[0], aces=0;
+  for(const c of cards){
+    totals = totals.map(t=> t + (c.rank==="A"?11:c.val));
+    if (c.rank==="A") aces++;
   }
-  updateStats();
-  updateBetDisplay();
+  while(aces>0 && Math.min(...totals)>21){
+    totals = totals.map(t=> t-10); // convert an Ace from 11 to 1
+    aces--;
+  }
+  totals = Array.from(new Set(totals)).sort((a,b)=>a-b);
+  return totals;
 }
-  renderGame(true);
+function bestTotal(cards){
+  const totals = calcTotals(cards).filter(t=>t<=21);
+  return totals.length? Math.max(...totals) : Math.min(...calcTotals(cards));
+}
+function isBlackjack(cards){ return cards.length===2 && bestTotal(cards)===21; }
+function isBust(cards){ return Math.min(...calcTotals(cards))>21; }
+
+function drawCard(){
+  const r = RANKS[Math.floor(Math.random()*RANKS.length)];
+  const s = SUITS[Math.floor(Math.random()*SUITS.length)];
+  return { rank:r.name, suit:s, val:r.val };
 }
 
+// ───────────────────────── RENDERING ─────────────────────────
+function cardImg(card){
+  // expects files like assets/spade_A.png etc.
+  const map = {"♠":"spade","♥":"heart","♦":"diamond","♣":"club"};
+  return `assets/${map[card.suit]}_${card.rank}.png`;
+}
+function renderHand(cards, containerId){
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = "";
+  cards.forEach(c=>{
+    const outer = document.createElement("div");
+    outer.className = "card-outer";
+    const inner = document.createElement("div");
+    inner.className = "card-inner flipped";
+    const front = document.createElement("img");
+    front.className = "card-face card-front";
+    front.src = cardImg(c);
+    const back = document.createElement("img");
+    back.className = "card-face card-back";
+    back.src = (c.suit==="♠"||c.suit==="♣")? "assets/back_black.png":"assets/back_red.png";
+    inner.appendChild(back); inner.appendChild(front);
+    outer.appendChild(inner);
+    cont.appendChild(outer);
+  });
+}
+function renderDealer(showAll=false){
+  const cont = el.dealerCards;
+  cont.innerHTML = "";
+  dealerHand.forEach((c, idx)=>{
+    const outer = document.createElement("div");
+    outer.className = "card-outer";
+    const inner = document.createElement("div");
+    inner.className = "card-inner" + ((showAll||idx===0)? " flipped" : "");
+    const front = document.createElement("img");
+    front.className = "card-face card-front";
+    front.src = cardImg(c);
+    const back = document.createElement("img");
+    back.className = "card-face card-back";
+    back.src = (c.suit==="♠"||c.suit==="♣")? "assets/back_black.png":"assets/back_red.png";
+    inner.appendChild(back); inner.appendChild(front);
+    outer.appendChild(inner);
+    cont.appendChild(outer);
+  });
+  // show total if revealed or round ended
+  const showTotal = showAll || gameState!==GameState.PLAYER;
+  if (showTotal){
+    let t = document.createElement("span");
+    t.className = "dealer-total";
+    t.textContent = ` (Total: ${bestTotal(dealerHand)})`;
+    cont.appendChild(t);
+  }
+}
 
-/** Refill player chips */
-// Bet button event listeners
-document.querySelectorAll('.chip-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const selectedBet = parseInt(this.dataset.value, 10);
-    if (selectedBet > player.chips) {
-      messageEl.textContent = "Not enough chips for that bet!";
+function updateStats(){
+  el.stats.textContent = `Wins: ${wins}  Losses: ${losses}  Pushes: ${pushes}`;
+  el.player.textContent = `${player.name}: $${player.chips}`;
+  el.betDisplay.textContent = `Bet: $${currentBet}`;
+}
+function setMessage(m){ el.msg.textContent = m; }
+function updateButtons(){
+  const inBet = gameState===GameState.BETTING;
+  // lock chip buttons during round
+  el.chipBtns.forEach(b=> b.disabled = !inBet);
+  el.startBtn.disabled = !inBet || currentBet<=0 || player.chips<currentBet;
+  const canPlay = gameState===GameState.PLAYER;
+  el.hitBtn.disabled = !canPlay;
+  el.standBtn.disabled = !canPlay;
+  el.splitBtn.disabled = !canPlay || !canSplit();
+}
+
+function canSplit(){
+  if (splitMode) return false;
+  if (playerHand.length!==2) return false;
+  return playerHand[0].val === playerHand[1].val && player.chips>=lockedBet; // need same again to cover second hand
+}
+
+// ───────────────────────── ROUND FLOW ─────────────────────────
+function startBetting(){
+  gameState = GameState.BETTING;
+  setMessage("Place your bet and start the round.");
+  updateButtons(); updateStats();
+  // Clear hands
+  playerHand=[]; splitHand=[]; dealerHand=[]; splitMode=false; playingSplit=false; dealt=false;
+  el.cards.innerHTML=""; el.split.innerHTML=""; el.dealerCards.innerHTML="";
+}
+function lockBet(){
+  lockedBet = currentBet;
+  player.chips -= lockedBet;
+}
+function unlockBet(){ lockedBet = 0; }
+
+function startGame(){
+  if (gameState!==GameState.BETTING) return;
+  if (currentBet<=0 || player.chips<currentBet) { setMessage("Invalid bet."); return; }
+  lockBet();
+  // deal two each
+  playerHand=[drawCard(), drawCard()];
+  dealerHand=[drawCard(), drawCard()];
+  dealt = true;
+  gameState = GameState.PLAYER;
+
+  // natural blackjack check
+  if (isBlackjack(playerHand)){
+    // peek dealer blackjack if upcard is A or 10
+    const up = dealerHand[0];
+    const isTen = ["10","J","Q","K"].includes(up.rank);
+    const peek = (up.rank==="A" || isTen);
+    if (peek && isBlackjack(dealerHand)){
+      pushes++; // push
+      player.chips += lockedBet; // return bet
+      gameState = GameState.SETTLE;
+      setMessage("Push: both have Blackjack.");
+    } else {
+      // player natural BJ
+      const payout = Math.floor(lockedBet * 1.5); // 3:2 simplified
+      player.chips += lockedBet + payout;
+      wins++;
+      gameState = GameState.SETTLE;
+      setMessage("Blackjack! Paid 3:2.");
+    }
+    renderAll();
+    endRound();
+    return;
+  }
+
+  setMessage("Hit or Stand?");
+  renderAll();
+  updateButtons();
+}
+
+function hit(){
+  if (gameState!==GameState.PLAYER) return;
+  if (!splitMode){
+    playerHand.push(drawCard());
+    const total = bestTotal(playerHand);
+    if (total>21){
+      setMessage("Bust!");
+      losses++;
+      gameState = splitMode? GameState.PLAYER : GameState.DEALER;
+      // if there's a split hand later we would switch; here we don't auto add split
+      renderAll();
+      dealerFinishAndSettle();
       return;
     }
-    currentBet = selectedBet;
-    updateBetDisplay();
+    if (total===21){
+      // auto-stand on 21
+      stand();
+      return;
+    }
+  } else {
+    splitHand.push(drawCard());
+    const total = bestTotal(splitHand);
+    if (total>21){
+      // bust this hand; move to next/settle
+      playingSplit = false;
+      setMessage("Split hand busts. Back to main or dealer.");
+      // if main already stood, go to dealer
+      stand(); // reuse stand flow to advance
+      return;
+    }
+    if (total===21){ stand(); return; }
+  }
+  renderAll();
+  updateButtons();
+}
+
+function stand(){
+  if (gameState!==GameState.PLAYER) return;
+  if (splitMode){
+    if (playingSplit){
+      // finished split hand
+      playingSplit=false;
+      // now dealer plays
+      dealerFinishAndSettle();
+      return;
+    } else {
+      // finish main hand, move to split
+      playingSplit=true;
+      setMessage("Playing split hand.");
+      updateButtons();
+      return;
+    }
+  } else {
+    // no split -> go to dealer
+    dealerFinishAndSettle();
+  }
+}
+
+function doSplit(){
+  if (!canSplit()) return;
+  splitMode = true;
+  // move one card to split hand and draw one for each
+  splitHand = [playerHand.pop()];
+  playerHand.push(drawCard());
+  splitHand.push(drawCard());
+  // lock a second bet
+  if (player.chips < lockedBet){ setMessage("Not enough chips to split."); splitMode=false; return; }
+  player.chips -= lockedBet;
+  playingSplit=false; // main first
+  setMessage("Split: play main hand, then split.");
+  renderAll();
+  updateButtons();
+}
+
+// dealer draws to 17 (stand on all 17s for simplicity here; can make S17/H17 configurable)
+function dealerFinishAndSettle(){
+  gameState = GameState.DEALER;
+  // reveal dealer hole and draw
+  while (bestTotal(dealerHand) < 17){
+    dealerHand.push(drawCard());
+  }
+  gameState = GameState.SETTLE;
+  settle();
+  renderAll();
+  endRound();
+}
+
+function settle(){
+  // Determine outcomes (support split: resolve main then split using lockedBet each)
+  const hands = splitMode ? [playerHand, splitHand] : [playerHand];
+  let totalPayout = 0;
+  const dTotal = bestTotal(dealerHand);
+  const dBust = isBust(dealerHand);
+
+  hands.forEach(h=>{
+    const pTotal = bestTotal(h);
+    if (isBust(h)){
+      losses++;
+      // player already paid bet at lock time
+      return;
+    }
+    if (dBust || pTotal > dTotal){
+      // win pays 1:1
+      wins++;
+      totalPayout += lockedBet*2;
+    } else if (pTotal === dTotal){
+      pushes++;
+      totalPayout += lockedBet; // return bet
+    } else {
+      losses++;
+    }
   });
-});Bet button event listeners
-document.querySelectorAll('.chip-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    currentBet = parseInt(this.dataset.value, 10);
-    updateBetDisplay();
+
+  player.chips += totalPayout;
+  setMessage(`Round over. Dealer: ${dTotal}.`);
+}
+
+function endRound(){
+  unlockBet();
+  updateStats();
+  updateButtons();
+  // back to betting
+  gameState = GameState.BETTING;
+}
+
+function renderAll(){
+  renderDealer(gameState!==GameState.PLAYER);
+  renderHand(playerHand, "cards-el");
+  if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
+  updateStats();
+}
+
+// ───────────────────────── UI HOOKS ─────────────────────────
+el.chipBtns.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    if (gameState!==GameState.BETTING) return; // lock during round
+    const v = parseInt(btn.dataset.value,10);
+    if (v > player.chips){ setMessage("Not enough chips for that bet!"); return; }
+    currentBet = v;
+    el.chipBtns.forEach(b=> b.classList.toggle("selected-chip", b===btn));
+    updateStats(); updateButtons();
   });
 });
+window.startGame = startGame;
+window.newCard = hit;
+window.stand = stand;
+window.splitHand = doSplit;
+window.refillChips = function(){
+  if (player.chips >= MAX_CHIPS) { setMessage(`Max $${MAX_CHIPS} reached.`); return; }
+  player.chips = Math.min(player.chips + 200, MAX_CHIPS);
+  updateStats();
+};
+// initialize
+startBetting();
