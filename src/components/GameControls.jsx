@@ -79,21 +79,36 @@ const GameControls = ({
   onStand,
   onDoubleDown,
   onSplit,
+  onSurrender,
+  onTakeInsurance,
   onNewRound,
   playerChips,
-  currentBet
+  currentBet,
+  canTakeInsurance = false
 }) => {
   const isPlayerTurn = gameState === GAME_STATES.PLAYER_TURN;
   const isGameOver = gameState === GAME_STATES.GAME_OVER;
   
   const canDoubleDown = availableActions.includes('doubleDown') && playerChips >= currentBet;
   const canSplit = availableActions.includes('split') && playerChips >= currentBet;
+  const canSurrender = availableActions.includes('surrender');
 
   return (
     <ControlsContainer>
       <MessageDisplay>
         {message}
       </MessageDisplay>
+
+      {canTakeInsurance && (
+        <ActionsContainer>
+          <ActionButton
+            variant="success"
+            onClick={onTakeInsurance}
+          >
+            INSURANCE
+          </ActionButton>
+        </ActionsContainer>
+      )}
 
       {isPlayerTurn && (
         <ActionsContainer>
@@ -129,6 +144,14 @@ const GameControls = ({
             title={!canSplit && playerChips < currentBet ? 'Not enough chips' : ''}
           >
             SPLIT
+          </ActionButton>
+
+          <ActionButton
+            variant="danger"
+            disabled={!canSurrender}
+            onClick={onSurrender}
+          >
+            SURRENDER
           </ActionButton>
         </ActionsContainer>
       )}

@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Hand from './Hand';
 import BettingInterface from './BettingInterface';
 import GameControls from './GameControls';
+import GameSettings from './GameSettings';
 import { useBlackjackGame } from '../hooks/useBlackjackGame';
 import { GAME_STATES } from '../utils/gameUtils';
+import { soundManager, initializeSounds } from '../utils/soundManager';
 
 const GameContainer = styled.div`
   min-height: 100vh;
@@ -22,6 +24,36 @@ const GameTitle = styled.h1`
   font-size: 3rem;
   margin-bottom: 20px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  position: relative;
+`;
+
+const SettingsButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: goldenrod;
+  border: 2px solid goldenrod;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    background: goldenrod;
+    color: #016f32;
+    transform: rotate(90deg);
+  }
+`;
+
+const HeaderContainer = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const GameBoard = styled.div`
@@ -62,6 +94,14 @@ const LoadingMessage = styled.div`
 `;
 
 const BlackjackGame = () => {
+  const [showSettings, setShowSettings] = useState(false);
+  const [gameSettings, setGameSettings] = useState({
+    soundEnabled: true,
+    autoStandOn21: true,
+    showHandTotals: true,
+    fastAnimations: false
+  });
+
   const {
     gameState,
     playerHands,
@@ -74,22 +114,77 @@ const BlackjackGame = () => {
     message,
     showDealerCard,
     availableActions,
+    canTakeInsurance,
     startRound,
     hit,
     stand,
     doubleDown,
     split,
+    surrender,
+    takeInsurance,
     newRound,
     setBet,
     refillChips
   } = useBlackjackGame();
 
+  // Initialize sounds on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      initializeSounds();
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   const handleHit = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
     hit(activeHandIndex);
   };
 
   const handleStand = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
     stand(activeHandIndex);
+  };
+
+  const handleStartRound = () => {
+    if (gameSettings.soundEnabled) {
+      soundManager.playButtonClick();
+      setTimeout(() => soundManager.playCardDeal(), 200);
+    }
+    startRound();
+  };
+
+  const handleDoubleDown = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
+    doubleDown();
+  };
+
+  const handleSplit = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
+    split();
+  };
+
+  const handleSurrender = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
+    surrender();
+  };
+
+  const handleTakeInsurance = () => {
+    if (gameSettings.soundEnabled) soundManager.playButtonClick();
+    takeInsurance();
+  };
+
+  const handleBetChange = (amount) => {
+    if (gameSettings.soundEnabled) soundManager.playChipClick();
+    setBet(amount);
   };
 
   const getHandStatus = (handIndex, hand) => {
@@ -103,7 +198,15 @@ const BlackjackGame = () => {
 
   return (
     <GameContainer>
-      <GameTitle>BlackJack</GameTitle>
+      <HeaderContainer>
+        <GameTitle>BlackJack</GameTitle>
+        <SettingsButton 
+          onClick={() => setShowSettings(true)}
+          title="Game Settings"
+        >
+          ⚙️
+        </SettingsButton>
+      </HeaderContainer>
       
       <GameBoard>
         {/* Dealer Hand */}
@@ -113,7 +216,7 @@ const BlackjackGame = () => {
             label="Dealer"
             isDealerHand={true}
             hideSecondCard={!showDealerCard && dealerHand.length > 1}
-            showValue={dealerHand.length > 0}
+            showValue={dealerHand.length > 0 && gameSettings.showHandTotals}
           />
         </HandsContainer>
 
@@ -127,7 +230,7 @@ const BlackjackGame = () => {
                 label={playerHands.length > 1 ? `Hand ${index + 1}` : 'Player'}
                 isActive={index === activeHandIndex && gameState === GAME_STATES.PLAYER_TURN}
                 status={getHandStatus(index, hand)}
-                showValue={hand.length > 0}
+                showValue={hand.length > 0 && gameSettings.showHandTotals}
               />
             ))}
           </PlayerHandsContainer>
@@ -139,8 +242,8 @@ const BlackjackGame = () => {
             <BettingInterface
               currentBet={currentBet}
               playerChips={playerChips}
-              onBetChange={setBet}
-              onStartGame={startRound}
+              onBetChange={handleBetChange}
+              onStartGame={handleStartRound}
               onRefillChips={refillChips}
               disabled={isDealing}
             />
@@ -154,11 +257,14 @@ const BlackjackGame = () => {
               stats={stats}
               onHit={handleHit}
               onStand={handleStand}
-              onDoubleDown={doubleDown}
-              onSplit={split}
+              onDoubleDown={handleDoubleDown}
+              onSplit={handleSplit}
+              onSurrender={handleSurrender}
+              onTakeInsurance={handleTakeInsurance}
               onNewRound={newRound}
               playerChips={playerChips}
               currentBet={currentBet}
+              canTakeInsurance={canTakeInsurance}
             />
           )}
         </ControlsSection>
@@ -169,6 +275,13 @@ const BlackjackGame = () => {
           Dealing cards...
         </LoadingMessage>
       )}
+
+      <GameSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={gameSettings}
+        onSettingsChange={setGameSettings}
+      />
     </GameContainer>
   );
 };
