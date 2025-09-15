@@ -29,6 +29,19 @@ const gameReducer = (state, action) => {
         totalBet: action.payload
       };
     
+    case 'TAKE_INSURANCE':
+      return {
+        ...state,
+        playerChips: state.playerChips - action.payload.amount,
+        handActions: {
+          ...state.handActions,
+          [0]: {
+            ...state.handActions[0],
+            insurance: action.payload.amount
+          }
+        }
+      };
+    
     case 'DEAL_INITIAL_CARDS':
       return {
         ...state,
@@ -314,6 +327,40 @@ export const useBlackjackGame = () => {
     }, 1500);
   }, [state.activeHandIndex, state.playerHands, state.playerChips, state.currentBet, state.deck, drawCard]);
 
+  // Insurance action
+  const takeInsurance = useCallback(() => {
+    const insuranceBet = Math.floor(state.currentBet / 2);
+    if (state.playerChips < insuranceBet) {
+      setMessage('Not enough chips for insurance!');
+      return;
+    }
+
+    dispatch({
+      type: 'TAKE_INSURANCE',
+      payload: { amount: insuranceBet }
+    });
+
+    setMessage('Insurance taken!');
+  }, [state.currentBet, state.playerChips]);
+
+  // Surrender action
+  const surrender = useCallback(() => {
+    const handIndex = state.activeHandIndex;
+    const currentHand = state.playerHands[handIndex];
+    
+    if (currentHand.length !== 2) return;
+
+    dispatch({
+      type: 'SET_HAND_ACTION',
+      payload: { handIndex, action: 'surrendered', value: true }
+    });
+
+    setMessage('Hand surrendered!');
+    
+    // End the round immediately
+    setTimeout(() => settleRound(), 1000);
+  }, [state.activeHandIndex, state.playerHands, settleRound]);
+
   // Split action
   const split = useCallback(() => {
     const handIndex = state.activeHandIndex;
@@ -377,9 +424,16 @@ export const useBlackjackGame = () => {
     let wins = 0, losses = 0, pushes = 0, blackjacks = 0;
 
     state.playerHands.forEach((hand, index) => {
-      const outcome = determineOutcome(hand, state.dealerHand);
       const isDoubledDown = state.handActions[index]?.doubledDown || false;
+      const hasSurrendered = state.handActions[index]?.surrendered || false;
       const handBet = isDoubledDown ? state.currentBet * 2 : state.currentBet;
+      
+      let outcome;
+      if (hasSurrendered) {
+        outcome = HAND_OUTCOMES.SURRENDER;
+      } else {
+        outcome = determineOutcome(hand, state.dealerHand, isDoubledDown, hasSurrendered);
+      }
       
       let payout = 0;
       let returnBet = 0;
@@ -399,13 +453,27 @@ export const useBlackjackGame = () => {
           returnBet = handBet;
           pushes++;
           break;
+        case HAND_OUTCOMES.SURRENDER:
+          returnBet = Math.floor(handBet / 2); // Get half bet back
+          losses++;
+          break;
         default:
           losses++;
           break;
       }
 
+      // Handle insurance payout
+      const insuranceBet = state.handActions[index]?.insurance || 0;
+      if (insuranceBet > 0) {
+        const dealerHasBlackjack = isBlackjack(state.dealerHand);
+        if (dealerHasBlackjack) {
+          payout += insuranceBet * 2; // Insurance pays 2:1
+        }
+        // If dealer doesn't have blackjack, insurance bet is already lost
+      }
+
       totalPayout += payout + returnBet;
-      results.push({ hand, outcome, payout, returnBet });
+      results.push({ hand, outcome, payout, returnBet, insuranceBet });
     });
 
     dispatch({
@@ -432,6 +500,9 @@ export const useBlackjackGame = () => {
           break;
         case HAND_OUTCOMES.BUST:
           setMessage('Bust! You lose.');
+          break;
+        case HAND_OUTCOMES.SURRENDER:
+          setMessage('Surrendered - Half bet returned.');
           break;
         default:
           setMessage('You lose.');
@@ -480,10 +551,27 @@ export const useBlackjackGame = () => {
       if (currentHand.length === 2 && canSplit(currentHand) && state.playerChips >= state.currentBet) {
         actions.push('split');
       }
+
+      // Can surrender on first two cards
+      if (currentHand.length === 2) {
+        actions.push('surrender');
+      }
     }
 
     return actions;
   }, [state.gameState, state.playerHands, state.activeHandIndex, state.playerChips, state.currentBet]);
+
+  // Check if insurance is available
+  const canTakeInsurance = useCallback(() => {
+    if (state.gameState !== GAME_STATES.PLAYER_TURN) return false;
+    if (state.dealerHand.length === 0) return false;
+    if (state.handActions[0]?.insurance) return false; // Already taken
+    
+    const dealerUpCard = state.dealerHand[0];
+    const insuranceCost = Math.floor(state.currentBet / 2);
+    
+    return dealerUpCard.rank === 'A' && state.playerChips >= insuranceCost;
+  }, [state.gameState, state.dealerHand, state.handActions, state.currentBet, state.playerChips]);
 
   return {
     // State
@@ -498,6 +586,7 @@ export const useBlackjackGame = () => {
     message,
     showDealerCard,
     availableActions: getAvailableActions(),
+    canTakeInsurance: canTakeInsurance(),
 
     // Actions
     startRound,
@@ -505,6 +594,8 @@ export const useBlackjackGame = () => {
     stand,
     doubleDown,
     split,
+    surrender,
+    takeInsurance,
     newRound,
     setBet,
     refillChips
