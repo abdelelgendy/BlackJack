@@ -1,13 +1,7 @@
-// Clean Blackjack logic with bet locking and auto-stand on 21
-// Uses the HTML IDs from your index.html
+import { SUITS, RANKS, GameState, drawCard, calcTotals, bestTotal, isBlackjack, isBust, canSplit } from './blackjackCore.js';
+import { cardImg, renderHand, renderDealer } from './blackjackUI.js';
 
 // ───────────────────────── STATE ─────────────────────────
-const SUITS = ["♠","♥","♦","♣"];
-const RANKS = [
-  {name:"A", val:11},{name:"2", val:2},{name:"3", val:3},{name:"4", val:4},
-  {name:"5", val:5},{name:"6", val:6},{name:"7", val:7},{name:"8", val:8},
-  {name:"9", val:9},{name:"10", val:10},{name:"J", val:10},{name:"Q", val:10},{name:"K", val:10}
-];
 
 const el = {
   msg: document.getElementById("message-el"),
@@ -46,84 +40,6 @@ let splitMode = false;
 let dealt = false;
 
 // ───────────────────────── HELPERS ─────────────────────────
-function calcTotals(cards){
-  let totals=[0], aces=0;
-  for(const c of cards){
-    totals = totals.map(t=> t + (c.rank==="A"?11:c.val));
-    if (c.rank==="A") aces++;
-  }
-  while(aces>0 && Math.min(...totals)>21){
-    totals = totals.map(t=> t-10); // convert an Ace from 11 to 1
-    aces--;
-  }
-  totals = Array.from(new Set(totals)).sort((a,b)=>a-b);
-  return totals;
-}
-function bestTotal(cards){
-  const totals = calcTotals(cards).filter(t=>t<=21);
-  return totals.length? Math.max(...totals) : Math.min(...calcTotals(cards));
-}
-function isBlackjack(cards){ return cards.length===2 && bestTotal(cards)===21; }
-function isBust(cards){ return Math.min(...calcTotals(cards))>21; }
-
-function drawCard(){
-  const r = RANKS[Math.floor(Math.random()*RANKS.length)];
-  const s = SUITS[Math.floor(Math.random()*SUITS.length)];
-  return { rank:r.name, suit:s, val:r.val };
-}
-
-// ───────────────────────── RENDERING ─────────────────────────
-function cardImg(card){
-  // expects files like assets/spade_A.png etc.
-  const map = {"♠":"spade","♥":"heart","♦":"diamond","♣":"club"};
-  return `assets/${map[card.suit]}_${card.rank}.png`;
-}
-function renderHand(cards, containerId){
-  const cont = document.getElementById(containerId);
-  cont.innerHTML = "";
-  cards.forEach(c=>{
-    const outer = document.createElement("div");
-    outer.className = "card-outer";
-    const inner = document.createElement("div");
-    inner.className = "card-inner flipped";
-    const front = document.createElement("img");
-    front.className = "card-face card-front";
-    front.src = cardImg(c);
-    const back = document.createElement("img");
-    back.className = "card-face card-back";
-    back.src = (c.suit==="♠"||c.suit==="♣")? "assets/back_black.png":"assets/back_red.png";
-    inner.appendChild(back); inner.appendChild(front);
-    outer.appendChild(inner);
-    cont.appendChild(outer);
-  });
-}
-function renderDealer(showAll=false){
-  const cont = el.dealerCards;
-  cont.innerHTML = "";
-  dealerHand.forEach((c, idx)=>{
-    const outer = document.createElement("div");
-    outer.className = "card-outer";
-    const inner = document.createElement("div");
-    inner.className = "card-inner" + ((showAll||idx===0)? " flipped" : "");
-    const front = document.createElement("img");
-    front.className = "card-face card-front";
-    front.src = cardImg(c);
-    const back = document.createElement("img");
-    back.className = "card-face card-back";
-    back.src = (c.suit==="♠"||c.suit==="♣")? "assets/back_black.png":"assets/back_red.png";
-    inner.appendChild(back); inner.appendChild(front);
-    outer.appendChild(inner);
-    cont.appendChild(outer);
-  });
-  // show total if revealed or round ended
-  const showTotal = showAll || gameState!==GameState.PLAYER;
-  if (showTotal){
-    let t = document.createElement("span");
-    t.className = "dealer-total";
-    t.textContent = ` (Total: ${bestTotal(dealerHand)})`;
-    cont.appendChild(t);
-  }
-}
 
 function updateStats(){
   el.stats.textContent = `Wins: ${wins}  Losses: ${losses}  Pushes: ${pushes}`;
@@ -142,10 +58,11 @@ function updateButtons(){
   el.splitBtn.disabled = !canPlay || !canSplit();
 }
 
-function canSplit(){
-  if (splitMode) return false;
-  if (playerHand.length!==2) return false;
-  return playerHand[0].val === playerHand[1].val && player.chips>=lockedBet; // need same again to cover second hand
+function renderAll(){
+  renderDealer(gameState!==GameState.PLAYER);
+  renderHand(playerHand, "cards-el");
+  if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
+  updateStats();
 }
 
 // ───────────────────────── ROUND FLOW ─────────────────────────
@@ -325,13 +242,6 @@ function endRound(){
   updateButtons();
   // back to betting
   gameState = GameState.BETTING;
-}
-
-function renderAll(){
-  renderDealer(gameState!==GameState.PLAYER);
-  renderHand(playerHand, "cards-el");
-  if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
-  updateStats();
 }
 
 // ───────────────────────── UI HOOKS ─────────────────────────
