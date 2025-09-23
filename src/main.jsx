@@ -1185,6 +1185,28 @@ const BlackJackGame = () => {
             font-size: 2.5rem !important;
           }
         }
+          @media (max-width: 480px) {
+            .game-container {
+              padding: 5px !important;
+              max-width: 100vw !important;
+            }
+            .card {
+              width: 60px !important;
+              height: 85px !important;
+            }
+            button {
+              padding: 8px 12px !important;
+              font-size: 0.85rem !important;
+              min-width: 70px !important;
+              border-radius: 10px !important;
+            }
+            h1 {
+              font-size: 1.3rem !important;
+            }
+            h3 {
+              font-size: 1rem !important;
+            }
+          }
       `}</style>
     </div>
   );
