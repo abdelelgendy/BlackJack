@@ -18,7 +18,10 @@ const el = {
   standBtn: document.getElementById("stand-btn"),
   splitBtn: document.getElementById("split-btn"),
   refillBtn: document.getElementById("refill-btn"),
-  chipBtns: Array.from(document.querySelectorAll(".chip-btn"))
+  chipBtns: Array.from(document.querySelectorAll(".chip-btn")),
+  doubleBtn: document.getElementById("double-btn"),
+  surrenderBtn: document.getElementById("surrender-btn"),
+  insuranceBtn: document.getElementById("insurance-btn")
 };
 
 const MAX_CHIPS = 1000;
@@ -39,6 +42,13 @@ let playingSplit = false; // which hand is active in PLAYER state
 let splitMode = false;
 let dealt = false;
 
+let insuranceOffered = false;
+let insuranceBet = 0;
+let doubleDownUsed = false;
+let surrendered = false;
+let splitAces = false;
+let dealerHitsSoft17 = false; // configurable
+
 // ───────────────────────── HELPERS ─────────────────────────
 
 function updateStats(){
@@ -56,6 +66,7 @@ function updateButtons(){
   el.hitBtn.disabled = !canPlay;
   el.standBtn.disabled = !canPlay;
   el.splitBtn.disabled = !canPlay || !canSplit();
+  el.doubleBtn.disabled = !canPlay;
 }
 
 function renderAll(){
@@ -193,12 +204,83 @@ function doSplit(){
   updateButtons();
 }
 
+function offerInsurance() {
+  if (gameState !== GameState.PLAYER) return;
+  const up = dealerHand[0];
+  if (up.rank === 'A' && !insuranceOffered) {
+    setMessage('Dealer shows Ace. Insurance?');
+    insuranceOffered = true;
+    // Show insurance button, handle insurance bet
+    el.insuranceBtn.style.display = 'inline-block';
+    el.insuranceBtn.onclick = () => {
+      insuranceBet = Math.floor(lockedBet / 2);
+      if (player.chips < insuranceBet) {
+        setMessage('Not enough chips for insurance.');
+        return;
+      }
+      player.chips -= insuranceBet;
+      setMessage('Insurance placed.');
+      el.insuranceBtn.style.display = 'none';
+    };
+  }
+}
+
+function doubleDown() {
+  if (gameState !== GameState.PLAYER || doubleDownUsed) return;
+  if (player.chips < lockedBet) {
+    setMessage('Not enough chips to double down.');
+    return;
+  }
+  player.chips -= lockedBet;
+  lockedBet *= 2;
+  doubleDownUsed = true;
+  hit();
+  stand();
+}
+
+function surrender() {
+  if (gameState !== GameState.PLAYER || surrendered) return;
+  surrendered = true;
+  setMessage('You surrendered. Half bet returned.');
+  player.chips += Math.floor(lockedBet / 2);
+  losses++;
+  gameState = GameState.SETTLE;
+  renderAll();
+  endRound();
+}
+
+function doSplitAces() {
+  if (!canSplit(playerHand, player.chips, lockedBet)) return;
+  if (playerHand[0].rank === 'A' && playerHand[1].rank === 'A') {
+    splitAces = true;
+    splitMode = true;
+    splitHand = [playerHand.pop()];
+    playerHand.push(drawCard());
+    splitHand.push(drawCard());
+    // Only one card per Ace
+    setMessage('Split Aces: Only one card per hand.');
+    renderAll();
+    updateButtons();
+    stand(); // auto-stand after one card
+    return;
+  }
+  doSplit();
+}
+
 // dealer draws to 17 (stand on all 17s for simplicity here; can make S17/H17 configurable)
 function dealerFinishAndSettle(){
   gameState = GameState.DEALER;
-  // reveal dealer hole and draw
-  while (bestTotal(dealerHand) < 17){
-    dealerHand.push(drawCard());
+  // Dealer hits to 17, configurable for soft 17
+  while (true) {
+    let total = bestTotal(dealerHand);
+    let hasAce = dealerHand.some(c => c.rank === 'A');
+    if (total < 17) {
+      dealerHand.push(drawCard());
+    } else if (dealerHitsSoft17 && total === 17 && hasAce) {
+      dealerHand.push(drawCard());
+    } else {
+      break;
+    }
   }
   gameState = GameState.SETTLE;
   settle();
@@ -238,10 +320,16 @@ function settle(){
 
 function endRound(){
   unlockBet();
+  insuranceOffered = false;
+  insuranceBet = 0;
+  doubleDownUsed = false;
+  surrendered = false;
+  splitAces = false;
   updateStats();
   updateButtons();
   // back to betting
   gameState = GameState.BETTING;
+  el.insuranceBtn.style.display = 'none';
 }
 
 // ───────────────────────── UI HOOKS ─────────────────────────
@@ -264,5 +352,9 @@ window.refillChips = function(){
   player.chips = Math.min(player.chips + 200, MAX_CHIPS);
   updateStats();
 };
+el.doubleBtn.onclick = doubleDown;
+el.surrenderBtn.onclick = surrender;
+el.insuranceBtn.style.display = 'none';
+el.splitBtn.onclick = doSplitAces;
 // initialize
 startBetting();
