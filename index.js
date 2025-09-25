@@ -25,7 +25,6 @@ const el = {
 };
 
 const MAX_CHIPS = 1000;
-const GameState = { BETTING:"Betting", PLAYER:"PlayerTurn", DEALER:"DealerTurn", SETTLE:"Settlement" };
 
 let player = { name:"Player", chips:200 };
 let wins=0, losses=0, pushes=0;
@@ -65,12 +64,12 @@ function updateButtons(){
   const canPlay = gameState===GameState.PLAYER;
   el.hitBtn.disabled = !canPlay;
   el.standBtn.disabled = !canPlay;
-  el.splitBtn.disabled = !canPlay || !canSplit();
-  el.doubleBtn.disabled = !canPlay;
+  el.splitBtn.disabled = !canPlay || !canSplit(playerHand, player.chips, lockedBet);
+  if (el.doubleBtn) el.doubleBtn.disabled = !canPlay;
 }
 
 function renderAll(){
-  renderDealer(gameState!==GameState.PLAYER);
+  renderDealer(dealerHand, gameState!==GameState.PLAYER, gameState, GameState);
   renderHand(playerHand, "cards-el");
   if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
   updateStats();
@@ -189,7 +188,7 @@ function stand(){
 }
 
 function doSplit(){
-  if (!canSplit()) return;
+  if (!canSplit(playerHand, player.chips, lockedBet)) return;
   splitMode = true;
   // move one card to split hand and draw one for each
   splitHand = [playerHand.pop()];
@@ -329,7 +328,7 @@ function endRound(){
   updateButtons();
   // back to betting
   gameState = GameState.BETTING;
-  el.insuranceBtn.style.display = 'none';
+  if (el.insuranceBtn) el.insuranceBtn.style.display = 'none';
 }
 
 // ───────────────────────── UI HOOKS ─────────────────────────
@@ -352,9 +351,13 @@ window.refillChips = function(){
   player.chips = Math.min(player.chips + 200, MAX_CHIPS);
   updateStats();
 };
-el.doubleBtn.onclick = doubleDown;
-el.surrenderBtn.onclick = surrender;
-el.insuranceBtn.style.display = 'none';
+// Only set onclick for elements that exist
+if (el.doubleBtn) el.doubleBtn.onclick = doubleDown;
+if (el.surrenderBtn) el.surrenderBtn.onclick = surrender;
+if (el.insuranceBtn) {
+  el.insuranceBtn.style.display = 'none';
+  el.insuranceBtn.onclick = null;
+}
 el.splitBtn.onclick = doSplitAces;
 // initialize
 startBetting();
