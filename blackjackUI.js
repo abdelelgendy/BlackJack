@@ -1,10 +1,12 @@
 // blackjackUI.js: Rendering and UI helpers
+import { bestTotal } from './blackjackCore.js';
 export function cardImg(card){
-  const map = {"♠":"spade","♥":"heart","♦":"diamond","♣":"club"};
+  const map = {"♠":"Spade","♥":"Heart","♦":"Diamond","♣":"Club"};
   return `assets/${map[card.suit]}_${card.rank}.png`;
 }
 export function renderHand(cards, containerId){
   const cont = document.getElementById(containerId);
+  if (!cont) return; // Handle case where container doesn't exist
   cont.innerHTML = "";
   cards.forEach(c=>{
     const outer = document.createElement("div");
@@ -41,10 +43,10 @@ export function renderDealer(dealerHand, showAll, gameState, GameState){
     cont.appendChild(outer);
   });
   const showTotal = showAll || gameState!==GameState.PLAYER;
-  if (showTotal){
+  if (showTotal && dealerHand.length > 0){
     let t = document.createElement("span");
     t.className = "dealer-total";
-    t.textContent = ` (Total: ${dealerHand.length>0?dealerHand.reduce((a,c)=>a+c.val,0):0})`;
+    t.textContent = ` (Total: ${bestTotal(dealerHand)})`;
     cont.appendChild(t);
   }
 }

@@ -9,6 +9,18 @@
     <body>
         <div id="game-container">
             <h1>Blackjack</h1>
+            
+            <!-- Game State Display (Always Visible at Top) -->
+            <div id="game-status-display" class="game-status">
+                <div class="status-row">
+                    <span id="dealer-score-display">Dealer: --</span>
+                    <span id="player-score-display">Player: --</span>
+                    <span id="current-bet-display">Bet: $1</span>
+                    <span id="balance-display">Balance: $200</span>
+                </div>
+                <div id="game-outcome-message" class="outcome-message"></div>
+            </div>
+            
             <p id="message-el" class="game-message">Want to play a round?</p>
             <div class="row">
                 <div class="col" style="flex:2;">
@@ -19,6 +31,19 @@
                     <div id="cards-el"></div>
                     
                     <p id="sum-el">Sum:</p>
+                    
+                    <div id="split-hands-container" style="display:none;">
+                        <div class="split-hand-display">
+                            <span class="hand-label">Hand 1</span>
+                            <div id="split-hand-1" class="split-hand"></div>
+                            <span id="split-total-1" class="hand-total"></span>
+                        </div>
+                        <div class="split-hand-display">
+                            <span class="hand-label">Hand 2</span>
+                            <div id="split-hand-2" class="split-hand"></div>
+                            <span id="split-total-2" class="hand-total"></span>
+                        </div>
+                    </div>
                     
                     <span id="split-hand-label" class="hand-label" style="display:none;">Split Hand</span>
                     <div id="split-el"></div>
@@ -35,6 +60,9 @@
                         <button id="start-game-btn" onclick="startGame()">START GAME</button>
                         <button id="new-card-btn" onclick="newCard()">HIT</button>
                         <button id="stand-btn" onclick="stand()">STAND</button>
+                        <button id="double-btn" onclick="doubleDown()">DOUBLE DOWN</button>
+                        <button id="surrender-btn" onclick="surrender()">SURRENDER</button>
+                        <button id="insurance-btn" onclick="takeInsurance()" style="display:none;">INSURANCE</button>
                         <button id="refill-btn" onclick="refillChips()">REFILL</button>
                     </div>
                     <div class="button-row split-actions">
