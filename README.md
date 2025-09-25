@@ -1,6 +1,6 @@
-# BlackJack React Game
+# BlackJack Game
 
-A fully-featured BlackJack game built with React, featuring proper game rules, animations, and advanced gameplay options.
+A fully-featured BlackJack game built with vanilla JavaScript, featuring proper game rules, animations, and advanced gameplay options.
 
 ## Features
 
@@ -88,41 +88,40 @@ A fully-featured BlackJack game built with React, featuring proper game rules, a
 
 ## Technology Stack
 
-- **React 18** with functional components and hooks
-- **Vite** for fast development and building
-- **Styled Components** for component-based styling
-- **Custom hooks** for game state management
-- **Modern JavaScript** with ES6+ features
+- **Vanilla JavaScript** with ES6+ features
+- **CSS3** for animations and styling
+- **HTML5** for semantic structure
+- **Modular design** with separate game logic and UI files
 
 ## File Structure
 
 ```
-src/
-├── components/
-│   ├── BlackjackGame.jsx      # Main game component
-│   ├── Card.jsx               # Individual card with animations
-│   ├── Hand.jsx               # Hand display with cards and totals
-│   ├── BettingInterface.jsx   # Chip selection and betting
-│   └── GameControls.jsx       # Game action buttons
-├── hooks/
-│   └── useBlackjackGame.js    # Main game state and logic
-├── utils/
-│   └── gameUtils.js           # Game calculations and utilities
-└── main.jsx                   # App entry point
+├── index.html              # Main HTML file with game UI
+├── index.js                # Main game logic and state management
+├── blackjackCore.js        # Core game functions and rules
+├── blackjackUI.js          # UI rendering helpers
+├── assets/                 # Card images
+└── README.md               # This file
 ```
 
 ## Running the Game
 
+### Simple HTTP Server
 ```bash
-# Install dependencies
-npm install
+# Using Python (recommended)
+python3 -m http.server 8080
 
-# Start development server
-npm run dev
+# Or using Node.js
+npx http-server -p 8080
 
-# Build for production
-npm run build
+# Or using PHP
+php -S localhost:8080
 ```
+
+Then open http://localhost:8080 in your browser.
+
+### Direct File Access
+You can also open `index.html` directly in your browser, though some browsers may restrict loading local images.
 
 ## Game Statistics
 
@@ -163,9 +162,11 @@ Possible additions for future versions:
 ## Performance
 
 The game is optimized for performance:
-- Minimal re-renders using React hooks
-- Efficient state management
+- Minimal DOM manipulation
+- Efficient card rendering
 - Smooth animations at 60fps
+- Fast game state updates
+- Optimized for mobile devices
 - Fast card shuffling algorithms
 - Optimized bundle size
 
