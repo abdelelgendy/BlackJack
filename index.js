@@ -25,7 +25,6 @@ const el = {
 };
 
 const MAX_CHIPS = 1000;
-const GameState = { BETTING:"Betting", PLAYER:"PlayerTurn", DEALER:"DealerTurn", SETTLE:"Settlement" };
 
 let player = { name:"Player", chips:200 };
 let wins=0, losses=0, pushes=0;
@@ -70,7 +69,7 @@ function updateButtons(){
 }
 
 function renderAll(){
-  renderDealer(gameState!==GameState.PLAYER);
+  renderDealer(dealerHand, gameState!==GameState.PLAYER, gameState, GameState);
   renderHand(playerHand, "cards-el");
   if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
   updateStats();
@@ -356,5 +355,13 @@ el.doubleBtn.onclick = doubleDown;
 el.surrenderBtn.onclick = surrender;
 el.insuranceBtn.style.display = 'none';
 el.splitBtn.onclick = doSplitAces;
+el.startBtn.onclick = startGame;
+el.hitBtn.onclick = hit;
+el.standBtn.onclick = stand;
+el.refillBtn.onclick = function(){
+  if (player.chips >= MAX_CHIPS) { setMessage(`Max $${MAX_CHIPS} reached.`); return; }
+  player.chips = Math.min(player.chips + 200, MAX_CHIPS);
+  updateStats();
+};
 // initialize
 startBetting();
