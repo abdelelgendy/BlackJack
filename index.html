@@ -2,12 +2,295 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlackJack - React</title>
+    <title>BlackJack</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', Arial, sans-serif;
+        background: #1a3a1a;
+        color: white;
+        min-height: 100vh;
+      }
+
+      .game-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      h1 {
+        color: goldenrod;
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      }
+
+      .game-area {
+        margin: 20px 0;
+      }
+
+      .dealer-section, .player-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        color: goldenrod;
+        margin-bottom: 15px;
+      }
+
+      .cards-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+        min-height: 120px;
+        align-items: center;
+      }
+
+      .card-outer {
+        perspective: 1000px;
+        width: 80px;
+        height: 112px;
+      }
+
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+      }
+
+      .card-inner.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-front {
+        transform: rotateY(180deg);
+      }
+
+      .card-back {
+        transform: rotateY(0deg);
+      }
+
+      .dealer-total {
+        color: goldenrod;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-left: 10px;
+      }
+
+      .betting-section {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .chip-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+      }
+
+      .chip-btn {
+        background: goldenrod;
+        color: #016f32;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 60px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .chip-btn:hover:not(:disabled) {
+        background: #ffd700;
+        transform: scale(1.05);
+      }
+
+      .chip-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .chip-btn.selected-chip {
+        background: #ffd700;
+        border: 3px solid #fff;
+        transform: scale(1.1);
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        background: goldenrod;
+        color: #016f32;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 120px;
+      }
+
+      .action-btn:hover:not(:disabled) {
+        background: #ffd700;
+        transform: translateY(-2px);
+      }
+
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #bfa74a;
+        color: #888;
+        transform: none;
+      }
+
+      .info-section {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .info-box {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        border-radius: 8px;
+        min-width: 150px;
+      }
+
+      .info-label {
+        color: goldenrod;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      .message {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 1.2rem;
+        color: #ffd700;
+        font-weight: bold;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .cards-container {
+          gap: 5px;
+        }
+
+        .card-outer {
+          width: 60px;
+          height: 84px;
+        }
+
+        .info-section {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="game-container">
+      <h1>🎰 BlackJack</h1>
+      
+      <div id="message-el" class="message">Place your bet to start the game!</div>
+      
+      <div class="dealer-section">
+        <div class="section-title" id="dealer-el">Dealer</div>
+        <div id="dealer-cards" class="cards-container"></div>
+      </div>
+
+      <div class="player-section">
+        <div class="section-title" id="player-el">Player: $200</div>
+        <div id="cards-el" class="cards-container"></div>
+        <div id="sum-el" class="info-label"></div>
+        
+        <div id="split-el" class="cards-container" style="margin-top: 20px;"></div>
+      </div>
+
+      <div class="betting-section">
+        <div class="info-section">
+          <div class="info-box">
+            <div class="info-label" id="bet-display">Bet: $1</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label" id="stats-el">Wins: 0  Losses: 0  Pushes: 0</div>
+          </div>
+        </div>
+
+        <div class="chip-container">
+          <button class="chip-btn" data-value="1">$1</button>
+          <button class="chip-btn" data-value="5">$5</button>
+          <button class="chip-btn" data-value="25">$25</button>
+          <button class="chip-btn" data-value="100">$100</button>
+        </div>
+
+        <div class="game-controls">
+          <button id="start-game-btn" class="action-btn">Start Game</button>
+          <button id="refill-btn" class="action-btn">Refill Chips</button>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button id="new-card-btn" class="action-btn" disabled>Hit</button>
+        <button id="stand-btn" class="action-btn" disabled>Stand</button>
+        <button id="split-btn" class="action-btn" disabled>Split</button>
+        <button id="double-btn" class="action-btn" disabled>Double Down</button>
+        <button id="surrender-btn" class="action-btn" disabled>Surrender</button>
+        <button id="insurance-btn" class="action-btn" disabled>Insurance</button>
+      </div>
+    </div>
+
+    <script type="module" src="./index.js"></script>
   </body>
 </html>
