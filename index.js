@@ -472,15 +472,23 @@ function settle(){
     const pTotal = bestTotal(h);
     const handLabel = splitMode ? `Hand ${index + 1}` : "";
     const betAmount = lockedBet / (splitMode ? 2 : 1); // Split bet in half for split hands
+    const pBust = isBust(h);
     
-    if (isBust(h)){
+    if (pBust && dBust){
+      // Both bust - dealer wins
+      losses++;
+      outcomeMessages.push(`${handLabel} Both bust - Dealer wins: -$${betAmount}`);
+    } else if (pBust){
+      // Player bust only
       losses++;
       outcomeMessages.push(`${handLabel} Bust: -$${betAmount}`);
-      return;
-    }
-    
-    if (dBust || pTotal > dTotal){
-      // win pays 1:1
+    } else if (dBust){
+      // Dealer bust only - player wins
+      wins++;
+      totalPayout += betAmount * 2;
+      outcomeMessages.push(`${handLabel} Dealer busts - Win: +$${betAmount}`);
+    } else if (pTotal > dTotal){
+      // Player wins
       wins++;
       totalPayout += betAmount * 2;
       outcomeMessages.push(`${handLabel} Win: +$${betAmount}`);
@@ -500,9 +508,15 @@ function settle(){
   const mainMessage = outcomeMessages.join(" | ");
   const fullMessage = mainMessage + insuranceMessage;
   
-  if (dBust) {
+  if (dBust && !hands.every(h => isBust(h))) {
     setMessage(`Dealer busts with ${dTotal}!`);
     showOutcomeMessage(fullMessage, "win");
+  } else if (hands.every(h => isBust(h)) && dBust) {
+    setMessage(`Both bust - Dealer wins with ${dTotal}`);
+    showOutcomeMessage(fullMessage, "lose");
+  } else if (hands.every(h => isBust(h))) {
+    setMessage(`Player busts - Dealer wins`);
+    showOutcomeMessage(fullMessage, "lose");
   } else if (outcomeMessages.some(msg => msg.includes("Win"))) {
     setMessage(`Final scores - Player vs Dealer: ${dTotal}`);
     showOutcomeMessage(fullMessage, "win");  
