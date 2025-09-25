@@ -21,7 +21,19 @@ const el = {
   chipBtns: Array.from(document.querySelectorAll(".chip-btn")),
   doubleBtn: document.getElementById("double-btn"),
   surrenderBtn: document.getElementById("surrender-btn"),
-  insuranceBtn: document.getElementById("insurance-btn")
+  insuranceBtn: document.getElementById("insurance-btn"),
+  // New game status display elements
+  dealerScoreDisplay: document.getElementById("dealer-score-display"),
+  playerScoreDisplay: document.getElementById("player-score-display"),
+  currentBetDisplay: document.getElementById("current-bet-display"),
+  balanceDisplay: document.getElementById("balance-display"),
+  outcomeMessage: document.getElementById("game-outcome-message"),
+  // Split hands elements
+  splitHandsContainer: document.getElementById("split-hands-container"),
+  splitHand1: document.getElementById("split-hand-1"),
+  splitHand2: document.getElementById("split-hand-2"),
+  splitTotal1: document.getElementById("split-total-1"),
+  splitTotal2: document.getElementById("split-total-2")
 };
 
 const MAX_CHIPS = 1000;
@@ -55,7 +67,50 @@ function updateStats(){
   el.player.textContent = `${player.name}: $${player.chips}`;
   el.betDisplay.textContent = `Bet: $${currentBet}`;
 }
+
+function updateGameStatusDisplay(){
+  // Update dealer score (only show visible cards during player turn)
+  let dealerScore = "";
+  if (dealerHand.length > 0) {
+    if (gameState === GameState.PLAYER) {
+      // Only show first card during player turn
+      dealerScore = `Dealer: ${dealerHand[0].val}`;
+    } else {
+      // Show full total during dealer turn and after
+      dealerScore = `Dealer: ${bestTotal(dealerHand)}`;
+    }
+  } else {
+    dealerScore = "Dealer: --";
+  }
+  el.dealerScoreDisplay.textContent = dealerScore;
+  
+  // Update player score
+  let playerScore = "";
+  if (playerHand.length > 0) {
+    playerScore = `Player: ${bestTotal(playerHand)}`;
+    if (splitMode && splitHand.length > 0) {
+      playerScore = `Hand 1: ${bestTotal(playerHand)} | Hand 2: ${bestTotal(splitHand)}`;
+    }
+  } else {
+    playerScore = "Player: --";
+  }
+  el.playerScoreDisplay.textContent = playerScore;
+  
+  // Update current bet and balance
+  el.currentBetDisplay.textContent = `Bet: $${lockedBet || currentBet}`;
+  el.balanceDisplay.textContent = `Balance: $${player.chips}`;
+}
 function setMessage(m){ el.msg.textContent = m; }
+
+function showOutcomeMessage(message, type = "") {
+  el.outcomeMessage.textContent = message;
+  el.outcomeMessage.className = `outcome-message ${type}`;
+}
+
+function clearOutcomeMessage() {
+  el.outcomeMessage.textContent = "";
+  el.outcomeMessage.className = "outcome-message";
+}
 function updateButtons(){
   const inBet = gameState===GameState.BETTING;
   // lock chip buttons during round
@@ -65,24 +120,74 @@ function updateButtons(){
   el.hitBtn.disabled = !canPlay;
   el.standBtn.disabled = !canPlay;
   el.splitBtn.disabled = !canPlay || !canSplit(playerHand, player.chips, lockedBet);
-  if (el.doubleBtn) el.doubleBtn.disabled = !canPlay;
+  
+  // Double down - only available on first two cards and if player has enough chips
+  el.doubleBtn.disabled = !canPlay || doubleDownUsed || 
+    (playerHand.length > 2) || (player.chips < lockedBet) ||
+    (splitMode && ((playingSplit && splitHand.length > 2) || (!playingSplit && playerHand.length > 2)));
+  
+  // Surrender - only available on first turn with first two cards
+  el.surrenderBtn.disabled = !canPlay || surrendered || 
+    (playerHand.length > 2) || splitMode;
+  
+  // Insurance - only show when dealer shows Ace and not already offered
+  const dealerShowsAce = dealerHand.length > 0 && dealerHand[0].rank === 'A';
+  if (dealerShowsAce && gameState === GameState.PLAYER && !insuranceOffered) {
+    el.insuranceBtn.style.display = 'inline-block';
+    el.insuranceBtn.disabled = player.chips < Math.floor(lockedBet / 2);
+  } else {
+    el.insuranceBtn.style.display = 'none';
+  }
 }
 
 function renderAll(){
   renderDealer(dealerHand, gameState!==GameState.PLAYER, gameState, GameState);
-  renderHand(playerHand, "cards-el");
-  if (splitMode) renderHand(splitHand, "split-el"); else document.getElementById("split-el").innerHTML="";
+  
+  if (splitMode) {
+    // Hide regular cards display, show split hands container
+    el.cards.style.display = 'none';
+    el.split.style.display = 'none';
+    el.splitHandsContainer.style.display = 'flex';
+    
+    // Render both split hands
+    renderHand(playerHand, "split-hand-1");
+    renderHand(splitHand, "split-hand-2");
+    
+    // Update totals
+    el.splitTotal1.textContent = `Total: ${bestTotal(playerHand)}`;
+    el.splitTotal2.textContent = `Total: ${bestTotal(splitHand)}`;
+    
+    // Highlight active hand
+    const hand1Container = el.splitHand1.closest('.split-hand-display');
+    const hand2Container = el.splitHand2.closest('.split-hand-display');
+    hand1Container.classList.toggle('active', !playingSplit);
+    hand2Container.classList.toggle('active', playingSplit);
+  } else {
+    // Show regular cards display, hide split container
+    el.cards.style.display = 'flex';
+    el.splitHandsContainer.style.display = 'none';
+    renderHand(playerHand, "cards-el");
+    el.split.innerHTML = "";
+  }
+  
   updateStats();
+  updateGameStatusDisplay();
 }
 
 // ───────────────────────── ROUND FLOW ─────────────────────────
 function startBetting(){
   gameState = GameState.BETTING;
   setMessage("Place your bet and start the round.");
-  updateButtons(); updateStats();
+  clearOutcomeMessage();
+  updateButtons(); updateStats(); updateGameStatusDisplay();
   // Clear hands
   playerHand=[]; splitHand=[]; dealerHand=[]; splitMode=false; playingSplit=false; dealt=false;
   el.cards.innerHTML=""; el.split.innerHTML=""; el.dealerCards.innerHTML="";
+  // Reset split display
+  el.splitHandsContainer.style.display = 'none';
+  el.cards.style.display = 'flex';
+  if (el.splitHand1) el.splitHand1.innerHTML="";
+  if (el.splitHand2) el.splitHand2.innerHTML="";
 }
 function lockBet(){
   lockedBet = currentBet;
@@ -94,6 +199,8 @@ function startGame(){
   if (gameState!==GameState.BETTING) return;
   if (currentBet<=0 || player.chips<currentBet) { setMessage("Invalid bet."); return; }
   lockBet();
+  clearOutcomeMessage();
+  
   // deal two each
   playerHand=[drawCard(), drawCard()];
   dealerHand=[drawCard(), drawCard()];
@@ -110,14 +217,16 @@ function startGame(){
       pushes++; // push
       player.chips += lockedBet; // return bet
       gameState = GameState.SETTLE;
-      setMessage("Push: both have Blackjack.");
+      setMessage("Both have Blackjack!");
+      showOutcomeMessage("Push: Bet returned", "push");
     } else {
       // player natural BJ
       const payout = Math.floor(lockedBet * 1.5); // 3:2 simplified
       player.chips += lockedBet + payout;
       wins++;
       gameState = GameState.SETTLE;
-      setMessage("Blackjack! Paid 3:2.");
+      setMessage("Blackjack!");
+      showOutcomeMessage(`Blackjack: +$${payout}`, "win");
     }
     renderAll();
     endRound();
@@ -136,9 +245,9 @@ function hit(){
     const total = bestTotal(playerHand);
     if (total>21){
       setMessage("Bust!");
+      showOutcomeMessage(`Player busts: -$${lockedBet}`, "lose");
       losses++;
       gameState = splitMode? GameState.PLAYER : GameState.DEALER;
-      // if there's a split hand later we would switch; here we don't auto add split
       renderAll();
       dealerFinishAndSettle();
       return;
@@ -149,14 +258,22 @@ function hit(){
       return;
     }
   } else {
-    splitHand.push(drawCard());
-    const total = bestTotal(splitHand);
+    const currentHand = playingSplit ? splitHand : playerHand;
+    currentHand.push(drawCard());
+    const total = bestTotal(currentHand);
     if (total>21){
       // bust this hand; move to next/settle
-      playingSplit = false;
-      setMessage("Split hand busts. Back to main or dealer.");
-      // if main already stood, go to dealer
-      stand(); // reuse stand flow to advance
+      if (playingSplit) {
+        setMessage("Split hand busts.");
+        showOutcomeMessage(`Split hand busts: -$${lockedBet}`, "lose");
+        playingSplit = false;
+        dealerFinishAndSettle();
+      } else {
+        setMessage("Main hand busts. Playing split hand.");
+        playingSplit = true;
+      }
+      renderAll();
+      updateButtons();
       return;
     }
     if (total===21){ stand(); return; }
@@ -203,6 +320,24 @@ function doSplit(){
   updateButtons();
 }
 
+function takeInsurance() {
+  if (gameState !== GameState.PLAYER || insuranceOffered) return;
+  
+  const insuranceCost = Math.floor(lockedBet / 2);
+  if (player.chips < insuranceCost) {
+    setMessage('Not enough chips for insurance.');
+    return;
+  }
+  
+  player.chips -= insuranceCost;
+  insuranceBet = insuranceCost;
+  insuranceOffered = true;
+  setMessage('Insurance placed.');
+  el.insuranceBtn.style.display = 'none';
+  renderAll();
+  updateButtons();
+}
+
 function offerInsurance() {
   if (gameState !== GameState.PLAYER) return;
   const up = dealerHand[0];
@@ -230,18 +365,44 @@ function doubleDown() {
     setMessage('Not enough chips to double down.');
     return;
   }
+  
+  // Check if it's valid to double down (first two cards only)
+  const currentHand = (!splitMode) ? playerHand : (playingSplit ? splitHand : playerHand);
+  if (currentHand.length > 2) {
+    setMessage('Can only double down on first two cards.');
+    return;
+  }
+  
   player.chips -= lockedBet;
   lockedBet *= 2;
   doubleDownUsed = true;
+  setMessage('Doubled down! Drawing one card...');
+  
+  // Draw one card and stand
   hit();
-  stand();
+  
+  // Auto-stand after double down (unless busted)
+  if (gameState === GameState.PLAYER) {
+    setTimeout(() => stand(), 500);
+  }
+  
+  renderAll();
+  updateButtons();
 }
 
 function surrender() {
-  if (gameState !== GameState.PLAYER || surrendered) return;
+  if (gameState !== GameState.PLAYER || surrendered || splitMode) return;
+  if (playerHand.length > 2) {
+    setMessage('Can only surrender on first two cards.');
+    return;
+  }
+  
   surrendered = true;
-  setMessage('You surrendered. Half bet returned.');
-  player.chips += Math.floor(lockedBet / 2);
+  const halfBet = Math.floor(lockedBet / 2);
+  const lostAmount = lockedBet - halfBet;
+  setMessage('You surrendered.');
+  showOutcomeMessage(`Surrender: -$${lostAmount}`, "lose");
+  player.chips += halfBet; // Return half the bet
   losses++;
   gameState = GameState.SETTLE;
   renderAll();
@@ -288,33 +449,70 @@ function dealerFinishAndSettle(){
 }
 
 function settle(){
+  // Handle insurance payout first
+  let insuranceMessage = "";
+  if (insuranceBet > 0) {
+    if (isBlackjack(dealerHand)) {
+      player.chips += insuranceBet * 3; // Insurance pays 2:1 plus return of bet
+      insuranceMessage = ` (Insurance pays $${insuranceBet * 2})`;
+    } else {
+      insuranceMessage = ` (Insurance lost: -$${insuranceBet})`;
+    }
+  }
+  
   // Determine outcomes (support split: resolve main then split using lockedBet each)
   const hands = splitMode ? [playerHand, splitHand] : [playerHand];
   let totalPayout = 0;
   const dTotal = bestTotal(dealerHand);
   const dBust = isBust(dealerHand);
+  
+  let outcomeMessages = [];
 
-  hands.forEach(h=>{
+  hands.forEach((h, index)=>{
     const pTotal = bestTotal(h);
+    const handLabel = splitMode ? `Hand ${index + 1}` : "";
+    const betAmount = lockedBet / (splitMode ? 2 : 1); // Split bet in half for split hands
+    
     if (isBust(h)){
       losses++;
-      // player already paid bet at lock time
+      outcomeMessages.push(`${handLabel} Bust: -$${betAmount}`);
       return;
     }
+    
     if (dBust || pTotal > dTotal){
       // win pays 1:1
       wins++;
-      totalPayout += lockedBet*2;
+      totalPayout += betAmount * 2;
+      outcomeMessages.push(`${handLabel} Win: +$${betAmount}`);
     } else if (pTotal === dTotal){
       pushes++;
-      totalPayout += lockedBet; // return bet
+      totalPayout += betAmount; // return bet
+      outcomeMessages.push(`${handLabel} Push: Bet returned`);
     } else {
       losses++;
+      outcomeMessages.push(`${handLabel} Lose: -$${betAmount}`);
     }
   });
 
   player.chips += totalPayout;
-  setMessage(`Round over. Dealer: ${dTotal}.`);
+  
+  // Show outcome message
+  const mainMessage = outcomeMessages.join(" | ");
+  const fullMessage = mainMessage + insuranceMessage;
+  
+  if (dBust) {
+    setMessage(`Dealer busts with ${dTotal}!`);
+    showOutcomeMessage(fullMessage, "win");
+  } else if (outcomeMessages.some(msg => msg.includes("Win"))) {
+    setMessage(`Final scores - Player vs Dealer: ${dTotal}`);
+    showOutcomeMessage(fullMessage, "win");  
+  } else if (outcomeMessages.every(msg => msg.includes("Push"))) {
+    setMessage(`Push - tied with dealer at ${dTotal}`);
+    showOutcomeMessage(fullMessage, "push");
+  } else {
+    setMessage(`Dealer wins with ${dTotal}`);
+    showOutcomeMessage(fullMessage, "lose");
+  }
 }
 
 function endRound(){
@@ -339,17 +537,23 @@ el.chipBtns.forEach(btn=>{
     if (v > player.chips){ setMessage("Not enough chips for that bet!"); return; }
     currentBet = v;
     el.chipBtns.forEach(b=> b.classList.toggle("selected-chip", b===btn));
-    updateStats(); updateButtons();
+    updateStats(); 
+    updateGameStatusDisplay();
+    updateButtons();
   });
 });
 window.startGame = startGame;
 window.newCard = hit;
 window.stand = stand;
-window.splitHand = doSplit;
+window.splitHand = doSplitAces;
+window.doubleDown = doubleDown;
+window.surrender = surrender;
+window.takeInsurance = takeInsurance;
 window.refillChips = function(){
   if (player.chips >= MAX_CHIPS) { setMessage(`Max $${MAX_CHIPS} reached.`); return; }
   player.chips = Math.min(player.chips + 200, MAX_CHIPS);
   updateStats();
+  updateGameStatusDisplay();
 };
 // Only set onclick for elements that exist
 if (el.doubleBtn) el.doubleBtn.onclick = doubleDown;
